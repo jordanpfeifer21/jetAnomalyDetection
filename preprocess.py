@@ -11,8 +11,6 @@ import argparse
 import pandas as pd
 import pickle
 
-# attempt comment 
-
 # parser = argparse.ArgumentParser(
 #     prog='Preprocess',
 #     description='preprocesses jet data for anomaly detection'
@@ -158,5 +156,5 @@ def main(datapath, savepath, datatype, filetype):
 
   return
 
-f ='data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
-main(f, '', 'background', '.root')
+f ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
+main(f, '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data', 'background', '.root')
