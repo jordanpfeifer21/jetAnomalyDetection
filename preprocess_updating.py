@@ -27,78 +27,33 @@ def plot(x, y, cc, ids):
     test = histo_pfcand(x, y, cc, hist_range, image_shape)
     return test
 
-def get_fatjets(event):
-    fatjet = event.FatJet
-    store_fj = [fj for fj in fatjet[0]]
-    print(fatjet)
-
-    # accept jets that do not have electrons or muons nearby
-    electrons = event.Electron
-    electrons = fatjet.nearest(electrons[electrons.pt > 20.0])
-    muons = event.Muon
-    muons = fatjet.nearest(muons[muons.pt > 20.0])
-
-    # add eta and pt cutoffs
-    filter_mask = (
-        (fatjet.delta_r(electrons) > 0.4) &
-        (fatjet.delta_r(muons) > 0.4) &
-        (fatjet.delta_r(fatjet.matched_gen) < 0.4) &
-        (fatjet.pt > 200.0) &
-        (abs(fatjet.eta) < 2.0) &
-        (ak.num(fatjet) > 0)
-   )
-    fatjet = fatjet[filter_mask]
-    print(fatjet)
-
-    # require matched generation particle close to the jet
-    fatjet = fatjet[~ak.is_none(fatjet.matched_gen, axis=1)]
-    fatjet = fatjet[~ak.is_none(fatjet)]
-
-    if (len(ak.argsort(fatjet.pt, axis=1)[0])) == 0: 
-      return -1, -1
-
-    fatjet = ak.firsts(fatjet[ak.argsort(fatjet.pt, axis=1)])
-    return fatjet, store_fj
-
 def each_event(events, ids, properties_of_interest, loaded_data, qcd):
     fatjets = events.FatJet
-    store_fj = []
+    store_fj = [fj for fj in fatjets[0]]
 
     if len(fatjets) == 0: 
         return [-1, -1]
 
-    for i in range(len(fatjets[0])):
-        store_fj.append(fatjets[0][i])
+    # accept jets that do not have electrons or muons nearby   
+    electrons = events.Electron
+    electrons = fatjets.nearest(electrons[electrons.pt > 20.0])
+    muons = events.Muon
+    muons = fatjets.nearest(muons[muons.pt > 20.0])
 
-    # remove overlapping jet and leptons
-    electrons_veto = events.Electron
-    electrons_veto = electrons_veto[electrons_veto.pt > 20.0]
-    electrons_veto = fatjets.nearest(electrons_veto)
-    # accept jet that doesn't have an electron nearby
-    electrons_veto_selection = ak.fill_none(fatjets.delta_r(electrons_veto) > 0.4, True)
-    fatjets = fatjets[electrons_veto_selection]
+    mask = (
+        (ak.fill_none(fatjets.delta_r(muons) > 0.4, True)) &
+        (ak.fill_none(fatjets.delta_r(muons) > 0.4, True)) & 
+        (~ak.is_none(fatjets.matched_gen, axis=1)) & 
+        (fatjets.delta_r(fatjets.matched_gen) < 0.4)& 
+        (fatjets.pt > 200.0) &
+        (abs(fatjets.eta) < 2.0) 
+        # (ak.num(fatjets) > 0)
+    )
 
-    muons_veto = events.Muon
-    muons_veto = muons_veto[muons_veto.pt > 20.0]
-    muons_veto = fatjets.nearest(muons_veto)
-    # accept jet that doesn't have a muon nearby
-    muons_veto_selection = ak.fill_none(fatjets.delta_r(muons_veto) > 0.4, True)
-    fatjets = fatjets[muons_veto_selection]
+    fatjets = fatjets[mask]
 
-    # gen-match
-    fatjets = fatjets[~ak.is_none(fatjets.matched_gen, axis=1)]
-    fatjets = fatjets[fatjets.delta_r(fatjets.matched_gen) < 0.4]
-
-    # pre-selection
-    selections = {}
-    selections['pt'] = fatjets.pt > 200.0
-    selections['eta'] = abs(fatjets.eta) < 2.0
-    selections['all'] = selections['pt'] & selections['eta'] 
-
-    fatjets = fatjets[selections['all']]
     fatjets = fatjets[ak.num(fatjets) > 0]
-    fatjets = fatjets[ak.argsort(fatjets.pt, axis=1)]
-    fatjets = ak.firsts(fatjets)
+    fatjets = ak.firsts(fatjets[ak.argsort(fatjets.pt, axis=1)])
 
     if len(fatjets) != 1:
         return [-1, -1]
@@ -151,45 +106,7 @@ def each_event(events, ids, properties_of_interest, loaded_data, qcd):
     properties = []
 
     obj = events.PFCands
-    # for field in properties_of_interest:
-        # if field == 'impact': 
-        #     d0 = ak.to_numpy(getattr(obj, 'd0')).flatten()
-        #     d0_err = ak.to_numpy(getattr(obj, 'd0Err')).flatten()
-        #     dz = ak.to_numpy(getattr(obj, 'dz')).flatten()
-        #     dz_err = ak.to_numpy(getattr(obj, 'dzErr')).flatten()
-        #     combined_impact = np.sqrt((d0_err**2 + dz_err**2)/np.sqrt(d0**2 + dz**2))
-        #     try:
-        #         manual = []
-        #         for i in pfcs: 
-        #             manual.appen(combined_impact[i])
-        #         properties.append(manual)
-        #         print(manual)
-        #         (print(str(field)))
-        #     except: 
-        #         a = 0
-
-        # elif field == 'pT': 
     properties.append(manual_pt)
-
-        # elif field == 'num_particles': 
-        #     a = 0
-            
-        # else:
-        #     field_name = "events.PFCands." + field
-        #     value = (getattr(obj, field))
-        #     type_val = type(value)
-        #     try: 
-        #         fatjetpfcands[str(field)] = getattr(obj, field)
-        #         manual = []
-        #         arr = ak.to_numpy(getattr(obj, field))
-        #         arr = arr.flatten()
-        #         for i in pfcs: 
-        #             manual.append(arr[i])
-        #         properties.append(manual)
-        #         print(manual)
-                # (print(str(field)))
-            # except: 
-            #     a = [1, 1]
 
     hist_array = []
     for prop in properties: 
