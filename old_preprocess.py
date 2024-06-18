@@ -1,13 +1,8 @@
-from collections import defaultdict
-import coffea
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
 import numpy as np
 import awkward as ak
-import numba as nb
 from fast_histogram import histogram2d
-import matplotlib.pyplot as plt
 import os
-import argparse
 
 def match_manual(fatjets, fatjetpfcands, idx):
     pfcs = []
@@ -31,6 +26,39 @@ def plot(x, y, cc, ids):
 
     test = histo_pfcand(x, y, cc, hist_range, image_shape)
     return test
+
+def get_fatjets(event):
+    fatjet = event.FatJet
+    store_fj = [fj for fj in fatjet[0]]
+    print(fatjet)
+
+    # accept jets that do not have electrons or muons nearby
+    electrons = event.Electron
+    electrons = fatjet.nearest(electrons[electrons.pt > 20.0])
+    muons = event.Muon
+    muons = fatjet.nearest(muons[muons.pt > 20.0])
+
+    # add eta and pt cutoffs
+    filter_mask = (
+        (fatjet.delta_r(electrons) > 0.4) &
+        (fatjet.delta_r(muons) > 0.4) &
+        (fatjet.delta_r(fatjet.matched_gen) < 0.4) &
+        (fatjet.pt > 200.0) &
+        (abs(fatjet.eta) < 2.0) &
+        (ak.num(fatjet) > 0)
+   )
+    fatjet = fatjet[filter_mask]
+    print(fatjet)
+
+    # require matched generation particle close to the jet
+    fatjet = fatjet[~ak.is_none(fatjet.matched_gen, axis=1)]
+    fatjet = fatjet[~ak.is_none(fatjet)]
+
+    if (len(ak.argsort(fatjet.pt, axis=1)[0])) == 0: 
+      return -1, -1
+
+    fatjet = ak.firsts(fatjet[ak.argsort(fatjet.pt, axis=1)])
+    return fatjet, store_fj
 
 def each_event(events, ids, properties_of_interest, loaded_data, qcd):
     fatjets = events.FatJet
@@ -123,45 +151,45 @@ def each_event(events, ids, properties_of_interest, loaded_data, qcd):
     properties = []
 
     obj = events.PFCands
-    for field in properties_of_interest:
-        if field == 'impact': 
-            d0 = ak.to_numpy(getattr(obj, 'd0')).flatten()
-            d0_err = ak.to_numpy(getattr(obj, 'd0Err')).flatten()
-            dz = ak.to_numpy(getattr(obj, 'dz')).flatten()
-            dz_err = ak.to_numpy(getattr(obj, 'dzErr')).flatten()
-            combined_impact = np.sqrt((d0_err**2 + dz_err**2)/np.sqrt(d0**2 + dz**2))
-            try:
-                manual = []
-                for i in pfcs: 
-                    manual.appen(combined_impact[i])
-                properties.append(manual)
-                print(manual)
-                (print(str(field)))
-            except: 
-                a = 0
+    # for field in properties_of_interest:
+        # if field == 'impact': 
+        #     d0 = ak.to_numpy(getattr(obj, 'd0')).flatten()
+        #     d0_err = ak.to_numpy(getattr(obj, 'd0Err')).flatten()
+        #     dz = ak.to_numpy(getattr(obj, 'dz')).flatten()
+        #     dz_err = ak.to_numpy(getattr(obj, 'dzErr')).flatten()
+        #     combined_impact = np.sqrt((d0_err**2 + dz_err**2)/np.sqrt(d0**2 + dz**2))
+        #     try:
+        #         manual = []
+        #         for i in pfcs: 
+        #             manual.appen(combined_impact[i])
+        #         properties.append(manual)
+        #         print(manual)
+        #         (print(str(field)))
+        #     except: 
+        #         a = 0
 
-        elif field == 'pT': 
-            properties.append(manual_pt)
+        # elif field == 'pT': 
+    properties.append(manual_pt)
 
-        elif field == 'num_particles': 
-            a = 0
+        # elif field == 'num_particles': 
+        #     a = 0
             
-        else:
-            field_name = "events.PFCands." + field
-            value = (getattr(obj, field))
-            type_val = type(value)
-            try: 
-                fatjetpfcands[str(field)] = getattr(obj, field)
-                manual = []
-                arr = ak.to_numpy(getattr(obj, field))
-                arr = arr.flatten()
-                for i in pfcs: 
-                    manual.append(arr[i])
-                properties.append(manual)
-                print(manual)
-                (print(str(field)))
-            except: 
-                a = [1, 1]
+        # else:
+        #     field_name = "events.PFCands." + field
+        #     value = (getattr(obj, field))
+        #     type_val = type(value)
+        #     try: 
+        #         fatjetpfcands[str(field)] = getattr(obj, field)
+        #         manual = []
+        #         arr = ak.to_numpy(getattr(obj, field))
+        #         arr = arr.flatten()
+        #         for i in pfcs: 
+        #             manual.append(arr[i])
+        #         properties.append(manual)
+        #         print(manual)
+                # (print(str(field)))
+            # except: 
+            #     a = [1, 1]
 
     hist_array = []
     for prop in properties: 
@@ -203,8 +231,8 @@ def main(file_name, file_type, save_folder, properties):
                     pts = []
                     jet_pt = []
 
-                    for k in range(0, len(events), 5000):
-                        for i in range(k, k+5000):
+                    for k in range(0, len(events), 10):
+                        for i in range(k, k+10):
                             out = each_event(events[i:i+1], i, loaded_data = loaded_data, properties_of_interest = properties, qcd = file_type)
                             arrays = out[0]
                             fatjet_pt = out[1]
@@ -216,7 +244,7 @@ def main(file_name, file_type, save_folder, properties):
 
                         n_arrays = len(properties)
                         parts = file_name.split('/')
-                        vector_filename = str(int(k/5000))+'_' + name + '_' + parts[-1] + str(n_arrays) + '.npy'
+                        vector_filename = str(int(k/10))+'_' + name + '_' + parts[-1] + str(n_arrays) + '.npy'
                         np.save(os.path.join(saving_folder, vector_filename), pts)
                         np.save(os.path.join(saving_folder, parts[-1] + str(k) + '_jet_pt'), jet_pt)
                 else: 
@@ -227,15 +255,16 @@ def main(file_name, file_type, save_folder, properties):
     if os.path.isfile(file_name): 
             given_folder(parent_folder, file_name, total_events) 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--file', type=str, default="", help='Filename')
-parser.add_argument('--type', type=str, default="")
-parser.add_argument('--save_folder', type=str, default="")
-parser.add_argument('--properties', nargs='+', type=str, default=[])
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--file', type=str, default="", help='Filename')
+# parser.add_argument('--type', type=str, default="")
+# parser.add_argument('--save_folder', type=str, default="")
+# parser.add_argument('--properties', nargs='+', type=str, default=[])
 
-args = parser.parse_args()
-file_name = args.file
-file_type = args.type
-save_folder = args.save_folder 
-properties = args.properties
-main(file_name, file_type, save_folder, properties)
+# args = parser.parse_args()
+# file_name = args.file
+# file_type = args.type
+# save_folder = args.save_folder 
+# properties = args.properties
+f ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
+main(f, 'qcd', '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data', 'pT')
