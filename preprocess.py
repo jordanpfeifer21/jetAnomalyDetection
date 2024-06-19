@@ -68,16 +68,6 @@ def process_event_root(events):
     pt = [ak.to_numpy(pfcands['pt']/fatjets['pt']).flatten()[i] for i in pfcs]
     # TODO: old ratio based on whether it is qcd or wjet -> this is not model agnostic !!!
       # check that current pt scheme is correct
-
-    # if qcd[0] == 'q': 
-    #     ratio_value = 1 
-    # elif qcd[0] == 'w': 
-    #     bin_index = np.digitize(fatjets['pt'], loaded_data['bin_edges']) - 1
-    #     if 0 <= bin_index < len(loaded_data['ratio']):
-    #         ratio_value = loaded_data['ratio'][bin_index]
-    #     else:
-    #         ratio_value = 1  # Number is outside the range of bin edges
-    # pfcands['pt_ratio'] = pfcands['pt']/(fatjets['pt'] * ratio_value)
     return pt, eta, phi
 
 def load_root(filepath):
