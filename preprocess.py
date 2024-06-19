@@ -112,10 +112,10 @@ if "__main__":
 
     main(data_path, save_path, data_type, file_type)
 
+
+# example call: 
+# python preprocess.py --data_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root' --save_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data' --data_type 'signal' --file_type '.root'
     
 # background ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
 # signal = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root'
 # main(signal, '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data', 'signal', '.root')
-
-# example call: 
-# python preprocess.py --data_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root' --save_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data' --data_type 'signal' --file_type '.root'
