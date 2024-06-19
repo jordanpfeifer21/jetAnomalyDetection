@@ -7,18 +7,6 @@ import pandas as pd
 from tqdm import tqdm 
 import warnings
 
-# def plot(x, y, cc, ids):
-#     eta_min, eta_max = -0.8, 0.8
-#     phi_min, phi_max = -0.8, 0.8
-#     incr = 0.05
-
-#     hist_range = [[eta_min, eta_max], [phi_min, phi_max]]
-#     eta_bins = np.arange(eta_min, eta_max, incr)
-#     phi_bins = np.arange(phi_min, phi_max, incr)
-#     image_shape = (eta_bins.shape[0], phi_bins.shape[0])
-
-#     return histogram2d(y, x, range=hist_range, bins=image_shape, weights=cc)
-
 def get_fatjets(events): 
     fatjets = events.FatJet
     store_fj = [fj for fj in fatjets[0]]
@@ -61,10 +49,9 @@ def process_event_root(events):
     
     if isinstance(fatjets, int): 
         return -1, -1, -1 
-    
     pfcands = events.PFCands
-    eta = [ak.to_numpy(pfcands.delta_phi(fatjets)).flatten()[i] for i in pfcs]
-    phi = [ak.to_numpy(pfcands['phi'] - fatjets['phi']).flatten()[i] for i in pfcs]
+    eta = [ak.to_numpy(pfcands['phi'] - fatjets['phi']).flatten()[i] for i in pfcs]
+    phi = [ak.to_numpy(pfcands['eta'] - fatjets['eta']).flatten()[i] for i in pfcs]
     pt = [ak.to_numpy(pfcands['pt']/fatjets['pt']).flatten()[i] for i in pfcs]
     # TODO: old ratio based on whether it is qcd or wjet -> this is not model agnostic !!!
       # check that current pt scheme is correct
@@ -82,8 +69,9 @@ def load_root(filepath):
             data['pT'].append(pt)
             data['eta'].append(eta)
             data['phi'].append(phi)
-        if len(data['pT']) == 100: 
-            print("2000 events reached")
+
+        if len(data['pT']) == 20: 
+            print("20 events reached")
             return pd.DataFrame.from_dict(data)
     else:
         pass
@@ -105,6 +93,7 @@ def main(datapath, savepath, datatype, filetype):
 
     return
 
-f ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
-main(f, '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data', 'background', '.root')
+background ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
+signal = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root'
+main(signal, '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data', 'signal', '.root')
 
