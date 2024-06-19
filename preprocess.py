@@ -6,6 +6,7 @@ import os
 import pandas as pd 
 from tqdm import tqdm 
 import warnings
+import argparse
 
 def get_fatjets(events): 
     fatjets = events.FatJet
@@ -93,6 +94,28 @@ def main(datapath, savepath, datatype, filetype):
 
     return
 
-background ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
-signal = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root'
-main(signal, '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data', 'signal', '.root')
+if "__main__": 
+    parser = argparse.ArgumentParser(
+        prog='Preprocess',
+        description='preprocesses jet data for anomaly detection'
+    )
+    parser.add_argument('--data_path', type=str, required=True, help='path where the data is stored')
+    parser.add_argument('--save_path', type=str, required=True, help='path where the processed data will be saved')
+    parser.add_argument('--data_type', choices=['background', 'signal'], required=True, help='"background" or "signal"')
+    parser.add_argument('--file_type', choices=['.root', '.h5'], required=False, default='.root')
+
+    args = parser.parse_args()
+    data_path = args.data_path
+    save_path = args.save_path
+    data_type = args.data_type
+    file_type = args.file_type
+
+    main(data_path, save_path, data_type, file_type)
+
+    
+# background ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
+# signal = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root'
+# main(signal, '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data', 'signal', '.root')
+
+# example call: 
+# python preprocess.py --data_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root' --save_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data' --data_type 'signal' --file_type '.root'
