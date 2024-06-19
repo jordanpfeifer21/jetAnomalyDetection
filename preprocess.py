@@ -97,3 +97,4 @@ background ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/
 signal = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root'
 main(signal, '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data', 'signal', '.root')
 
+# this is a test 
