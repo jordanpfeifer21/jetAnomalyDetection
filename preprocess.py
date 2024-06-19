@@ -5,6 +5,7 @@ from fast_histogram import histogram2d
 import os
 import pandas as pd 
 from tqdm import tqdm 
+import warnings
 
 # def plot(x, y, cc, ids):
 #     eta_min, eta_max = -0.8, 0.8
@@ -91,6 +92,9 @@ def load_root(filepath):
             data['pT'].append(pt)
             data['eta'].append(eta)
             data['phi'].append(phi)
+        if len(data['pT']) == 100: 
+            print("2000 events reached")
+            return pd.DataFrame.from_dict(data)
     else:
         pass
 
@@ -100,12 +104,14 @@ def load_h5():
     return
 
 def main(datapath, savepath, datatype, filetype):
+    # TODO: should we actually care about this warning? 
+    warnings.filterwarnings("ignore", message="Found duplicate branch")
     if filetype == '.h5':
         load_h5()
     else:
         df = load_root(datapath)
-    df
-    df.to_pickle(savepath + "/" + filetype + ".pkl")
+    print(df)
+    df.to_pickle(savepath + "/" + datatype + ".pkl")
 
     return
 
