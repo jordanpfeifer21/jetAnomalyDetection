@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np 
-from fast_histogram import histogram2d
-import matplotlib.pyplot as plt
 from histogram import make_histogram, plot_histogram
 
 background_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/background.pkl'
