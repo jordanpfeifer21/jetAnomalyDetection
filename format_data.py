@@ -51,25 +51,19 @@ def make_graph(data):
     phi = data['phi'].tolist()[0]
     num_nodes = len(pt)
 
-
     g = dgl.DGLGraph()
 
     node_pairs = np.column_stack((eta, phi))
-    # node_pairs = np.reshape((node_pairs), (len(pt), 2))
-    print(node_pairs.shape)
 
     distances = cdist(node_pairs, node_pairs)
     for i in range(num_nodes): 
         closest_indices = np.argsort(distances[i][1:10]) # add edges between the 10 closest nodes 
         g.add_edges(i, closest_indices)
         g.add_edges(closest_indices, i)
-    print(len(pt))
     pt = np.reshape(pt, (-1, 1))
-    print(pt.shape)
     feat = torch.tensor(node_pairs)
-    g.ndata['feat'] = feat 
+    g.ndata['feat'] = feat # is this better than individual eta and phi? what exactly is feat? 
     g.ndata['pt'] = torch.tensor(pt)
-
 
     print(g)
     return g 
