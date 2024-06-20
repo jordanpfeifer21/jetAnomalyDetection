@@ -26,7 +26,7 @@ def plot_property_distribution(background, signal):
             plt.legend()
             plt.savefig("plots/property_distributions/" + prop_name + "_distribution.png")
 
-            plt.clf()
+            plt.close(fig)
 
 
     # background_pt = [pt for sublist in background['pt'] for pt in sublist]

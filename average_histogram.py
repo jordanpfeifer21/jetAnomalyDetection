@@ -9,11 +9,17 @@ background = pd.read_pickle(background_file)
 signal = pd.read_pickle(signal_file)
 
 def plot_avg(data, filetype):
-    hist_array = []
-    for index, row in data.iterrows(): 
-        hist_array.append(make_histogram(data['eta'][index], data['phi'][index], data['pT'][index]))
-    avg = np.mean(hist_array, axis=0)
-    plot_histogram(avg, "plots/avg_"+ filetype + ".png", "average_" + filetype)
-
+    eta = data['eta']
+    phi = data['phi']
+    
+    for prop_name in data.columns: 
+        if prop_name != "eta" and prop_name != "phi":
+            if len(data[prop_name][0]) == len(eta[0]):
+                hist_array = []
+                for index, row in data.iterrows(): 
+                    hist_array.append(make_histogram(eta[index], phi[index], data[prop_name][index]))
+                avg = np.mean(hist_array, axis=0)
+                plot_histogram(avg, "plots/histograms/avg_"+ filetype + "_" + prop_name + ".png", "average_" + filetype + "_" + prop_name)
+            
 plot_avg(background, "background")
 plot_avg(signal, "signal")
