@@ -40,8 +40,9 @@ import dgl.data
 
 # Generate a synthetic dataset with 10000 graphs, ranging from 10 to 500 nodes.
 dataset = dgl.data.GINDataset('PROTEINS', self_loop=True)
-dataset = GraphDataLoader(
-    "./data.bin")
+# dataset = GraphDataLoader(
+    # "./data.bin")
+print(dataset)
 ######################################################################
 # The dataset is a set of graphs, each with node features and a single
 # label. One can see the node feature dimensionality and the number of
@@ -179,6 +180,7 @@ class GCN(nn.Module):
 
 # Create the model with given dimensions
 model = GCN(dataset.dim_nfeats, 16, dataset.gclasses)
+print("!!!!!!!!!!", dataset.dim_nfeats)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
 for epoch in range(20):
