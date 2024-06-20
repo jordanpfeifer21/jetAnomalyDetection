@@ -1,0 +1,180 @@
+"""
+Make Your Own Dataset
+=====================
+
+This tutorial assumes that you already know :doc:`the basics of training a
+GNN for node classification <1_introduction>` and :doc:`how to
+create, load, and store a DGL graph <2_dglgraph>`.
+
+By the end of this tutorial, you will be able to
+
+-  Create your own graph dataset for node classification, link
+   prediction, or graph classification.
+
+(Time estimate: 15 minutes)
+"""
+
+
+######################################################################
+# ``DGLDataset`` Object Overview
+# ------------------------------
+# 
+# Your custom graph dataset should inherit the ``dgl.data.DGLDataset``
+# class and implement the following methods:
+# 
+# -  ``__getitem__(self, i)``: retrieve the ``i``-th example of the
+#    dataset. An example often contains a single DGL graph, and
+#    occasionally its label.
+# -  ``__len__(self)``: the number of examples in the dataset.
+# -  ``process(self)``: load and process raw data from disk.
+# 
+
+
+######################################################################
+# Creating a Dataset for Graph Classification from CSV
+# ----------------------------------------------------
+# 
+# Creating a graph classification dataset involves implementing
+# ``__getitem__`` to return both the graph and its graph-level label.
+# 
+# This tutorial demonstrates how to create a graph classification dataset
+# with the following synthetic CSV data:
+# 
+# -  ``graph_edges.csv``: containing three columns:
+# 
+#    -  ``graph_id``: the ID of the graph.
+#    -  ``src``: the source node of an edge of the given graph.
+#    -  ``dst``: the destination node of an edge of the given graph.
+# 
+# -  ``graph_properties.csv``: containing three columns:
+# 
+#    -  ``graph_id``: the ID of the graph.
+#    -  ``label``: the label of the graph.
+#    -  ``num_nodes``: the number of nodes in the graph.
+# 
+import urllib.request
+import pandas as pd
+import dgl 
+from dgl.data import DGLDataset
+import torch
+import os
+import numpy as np 
+from scipy.spatial.distance import cdist
+import constants as c 
+import torch.nn as nn
+import torch.nn.functional as F
+from dgl.dataloading import GraphDataLoader
+import dgl.nn.pytorch as dglnn
+
+
+
+def load_files(background_file, signal_file):
+    background = pd.read_pickle(background_file)
+    signal = pd.read_pickle(signal_file) 
+    return background, signal 
+
+background_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/background.pkl'
+signal_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/signal.pkl'
+background, signal = load_files(background_file, signal_file)
+
+
+def make_graph(pt, eta, phi): 
+    num_nodes = len(pt)
+
+    g = dgl.DGLGraph()
+
+    node_pairs = np.column_stack((eta, phi))
+
+    distances = cdist(node_pairs, node_pairs)
+    for i in range(num_nodes): 
+        closest_indices = np.argsort(distances[i][1:c.CLOSEST_NEIGHBORS]) # add edges between the 10 closest nodes 
+        g.add_edges(i, closest_indices)
+        g.add_edges(closest_indices, i)
+    pt = np.reshape(pt, (-1, 1))
+    feat = torch.tensor(node_pairs)
+    g.ndata['feat'] = feat # is this better than individual eta and phi? what exactly is feat? 
+    g.ndata['pt'] = torch.tensor(pt)
+    # print(g)
+    return g 
+
+def get_graphs(data):
+    graphs = []
+    for i in range(len(data['eta'].tolist())): 
+        pt = data['pt'][i]
+        eta = data['eta'][i]
+        phi = data['phi'][i]
+        graphs.append(make_graph(pt, eta, phi))
+    return graphs 
+
+# graphs =  # list of graphs 
+
+
+class SyntheticDataset(DGLDataset):
+    def __init__(self):
+        super().__init__(name='synthetic')
+        
+    def process(self):
+        self.graphs = []
+        self.labels = []
+      
+        self.graphs = get_graphs(background)
+        self.labels = np.zeros(len(self.graphs))
+            
+        # Convert the label list to tensor for saving.
+        self.labels = torch.LongTensor(self.labels)
+        
+    def __getitem__(self, i):
+        return self.graphs[i], self.labels[i]
+    
+    def __len__(self):
+        return len(self.graphs)
+
+dataset = SyntheticDataset()
+graph, label = dataset[0]
+# print(graph, label)
+# dataset.save()
+labels_dict = {'labels': dataset.labels}
+dgl.save_graphs("./data.bin", dataset.graphs, labels=labels_dict)
+
+# dgl.save_graphs('dataset.bin', dataset.graphs, labels=dataset.labels)
+
+class Classifier(nn.Module): 
+    def __init__(self, in_dim, hidden_dim, n_classes):
+        super(Classifier, self).__init__()
+        self.conv1 = dglnn.GraphConv(in_dim, hidden_dim)
+        self.conv2 = dglnn.GraphConv(hidden_dim, hidden_dim)
+        self.classify = nn.Linear(hidden_dim, n_classes)
+
+    def forward(self, g, h):
+        # Apply graph convolution and activation.
+        h = F.relu(self.conv1(g, h))
+        h = F.relu(self.conv2(g, h))
+        with g.local_scope():
+            g.ndata['h'] = h
+            # Calculate graph representation by average readout.
+            hg = dgl.mean_nodes(g, 'h')
+            return self.classify(hg)
+
+# dataset = d
+# labels = np.zeroS
+dataloader = GraphDataLoader(
+    dataset)
+    
+model = Classifier(2, 20, 2)
+opt = torch.optim.Adam(model.parameters())
+for epoch in range(20):
+    for batched_graph, labels in dataloader:
+        feats = batched_graph.ndata['feat']
+        logits = model(batched_graph, feats)
+        loss = F.cross_entropy(logits, labels)
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+
+print(model)
+
+
+
+
+
+
