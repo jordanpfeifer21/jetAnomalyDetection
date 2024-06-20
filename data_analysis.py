@@ -1,6 +1,39 @@
-import matplotlib.pyplot as plt 
+import pandas as pd
 import numpy as np 
-import pandas as pd 
+from histogram import make_histogram, plot_histogram
+import matplotlib.pyplot as plt 
+
+background_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/background.pkl'
+signal_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/signal.pkl'
+background = pd.read_pickle(background_file)
+signal = pd.read_pickle(signal_file)
+
+idx = 1
+eta = background['eta'][idx]
+phi = background['phi'][idx]
+
+for prop_name in background.columns: 
+        if prop_name != "eta" and prop_name != "phi":
+            background_prop = background[prop_name][idx]
+            if len(background_prop) == len(eta): 
+                hist = make_histogram(eta, phi, background_prop)
+                plot_histogram(hist, "plots/histograms/ex_hist_" + prop_name + ".png", "example background " + prop_name)
+                
+def plot_avg(data, filetype):
+    eta = data['eta']
+    phi = data['phi']
+    
+    for prop_name in data.columns: 
+        if prop_name != "eta" and prop_name != "phi":
+            if len(data[prop_name][0]) == len(eta[0]):
+                hist_array = []
+                for index, row in data.iterrows(): 
+                    hist_array.append(make_histogram(eta[index], phi[index], data[prop_name][index]))
+                avg = np.mean(hist_array, axis=0)
+                plot_histogram(avg, "plots/histograms/avg_"+ filetype + "_" + prop_name + ".png", "average_" + filetype + "_" + prop_name)
+            
+plot_avg(background, "background")
+plot_avg(signal, "signal")
 
 def plot_property_distribution(background, signal):
     for prop_name in background.columns: 
@@ -28,15 +61,9 @@ def plot_property_distribution(background, signal):
 
             plt.close(fig)
 
-
-    # background_pt = [pt for sublist in background['pt'] for pt in sublist]
-    # signal_pt = [pt for sublist in signal['pt'] for pt in sublist]
-
-    # bins = 50  # Number of bins
-    
-
 background_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/background.pkl'
 signal_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/signal.pkl'
 background = pd.read_pickle(background_file)
 signal = pd.read_pickle(signal_file)
 plot_property_distribution(background, signal)
+
