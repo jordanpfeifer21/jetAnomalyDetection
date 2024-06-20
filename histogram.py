@@ -1,15 +1,12 @@
 from fast_histogram import histogram2d
 import numpy as np 
 import matplotlib.pyplot as plt 
+import constants as c 
 
 def make_histogram(eta, phi, cc):
-    eta_min, eta_max = -0.8, 0.8
-    phi_min, phi_max = -0.8, 0.8
-    incr = 0.05
-
-    hist_range = [[eta_min, eta_max], [phi_min, phi_max]]
-    eta_bins = np.arange(eta_min, eta_max, incr)
-    phi_bins = np.arange(phi_min, phi_max, incr)
+    hist_range = [[c.ETA_MIN, c.ETA_MAX], [c.PHI_MIN, c.PHI_MAX]]
+    eta_bins = np.arange(c.ETA_MIN, c.ETA_MAX, c.INCR)
+    phi_bins = np.arange(c.PHI_MIN, c.PHI_MAX, c.INCR)
     image_shape = (eta_bins.shape[0], phi_bins.shape[0])
 
     return histogram2d(phi, eta, range=hist_range, bins=image_shape, weights=cc)
