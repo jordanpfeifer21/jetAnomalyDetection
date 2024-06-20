@@ -7,6 +7,7 @@ import pandas as pd
 from tqdm import tqdm 
 import warnings
 import argparse
+import constants as c 
 
 def get_fatjets(events): 
     fatjets = events.FatJet
@@ -14,17 +15,17 @@ def get_fatjets(events):
 
     # accept jets that do not have electrons or muons nearby   
     electrons = events.Electron
-    electrons = fatjets.nearest(electrons[electrons.pt > 20.0])
+    electrons = fatjets.nearest(electrons[electrons.pt > c.ELECTRON_PT_LOWER_BOUND])
     muons = events.Muon
-    muons = fatjets.nearest(muons[muons.pt > 20.0])
+    muons = fatjets.nearest(muons[muons.pt > c.MUON_PT_LOWER_BOUND])
     
     mask = (
-        (ak.fill_none(fatjets.delta_r(muons) > 0.4, True)) &
-        (ak.fill_none(fatjets.delta_r(muons) > 0.4, True)) & 
+        (ak.fill_none(fatjets.delta_r(electrons) > c.ELECTRON_R_LOWER_BOUND, True)) &
+        (ak.fill_none(fatjets.delta_r(muons) > c.MUON_R_LOWER_BOUND, True)) & 
         (~ak.is_none(fatjets.matched_gen, axis=1)) & 
-        (fatjets.delta_r(fatjets.matched_gen) < 0.4)& 
-        (fatjets.pt > 200.0) &
-        (abs(fatjets.eta) < 2.0) 
+        (fatjets.delta_r(fatjets.matched_gen) < c.MATCHED_GEN_R_LOWER_BOUND)& 
+        (fatjets.pt > c.FATJET_PT_LOWER_BOUND) &
+        (abs(fatjets.eta) < c.FATJET_ETA_BOUNDS) 
     )
 
     fatjets = fatjets[mask]
@@ -38,9 +39,9 @@ def get_fatjets(events):
     fatjets = ak.firsts(fatjets[ak.argsort(fatjets.pt, axis=1)])
 
     for j, fj in enumerate(store_fj):
-      if (abs(fj.eta - fatjets.eta[0]) < 0.1 and
-          abs(fj.phi - fatjets.phi[0]) < 0.1 and
-          abs(fj.pt - fatjets.pt[0]) < 1):
+      if (abs(fj.eta - fatjets.eta[0]) < c.FATJET_DELTA_ETA_BOUND and
+          abs(fj.phi - fatjets.phi[0]) < c.FATJET_DELTA_PHI_BOUND and
+          abs(fj.pt - fatjets.pt[0]) < c.FATJET_DELTA_PT_BOUND):
           pfcs = [pfcand["pFCandsIdx"] for pfcand in events.FatJetPFCands[0] if pfcand["jetIdx"] == j]
 
     return fatjets, pfcs
