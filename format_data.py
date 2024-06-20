@@ -4,10 +4,11 @@ import numpy as np
 import dgl #deep graph network that will make integrating graphs easier
 import torch
 from scipy.spatial.distance import cdist
+import constants as c
 
 def format_2D(data):
     hist = [make_histogram(data['eta'][i], data['phi'][i],data['pT'][i]) for i in range(data.shape[0])]
-    hist = np.reshape(hist, (-1, 32, 32, 1))
+    hist = np.reshape(hist, (-1, c.BINS, c.BINS, 1))
     return hist
 
 def format_graph(data): 
@@ -57,7 +58,7 @@ def make_graph(data):
 
     distances = cdist(node_pairs, node_pairs)
     for i in range(num_nodes): 
-        closest_indices = np.argsort(distances[i][1:10]) # add edges between the 10 closest nodes 
+        closest_indices = np.argsort(distances[i][1:c.CLOSEST_NEIGHBORS]) # add edges between the 10 closest nodes 
         g.add_edges(i, closest_indices)
         g.add_edges(closest_indices, i)
     pt = np.reshape(pt, (-1, 1))
