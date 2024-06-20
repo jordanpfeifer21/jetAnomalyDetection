@@ -50,33 +50,44 @@ def process_event_root(events):
     fatjets, pfcs = get_fatjets(events)
     
     if isinstance(fatjets, int): 
-        return -1, -1, -1 
+        return -1, -1
     pfcands = events.PFCands
     eta = [ak.to_numpy(pfcands['phi'] - fatjets['phi']).flatten()[i] for i in pfcs]
     phi = [ak.to_numpy(pfcands['eta'] - fatjets['eta']).flatten()[i] for i in pfcs]
     pt = [ak.to_numpy(pfcands['pt']/fatjets['pt']).flatten()[i] for i in pfcs]
     # TODO: old ratio based on whether it is qcd or wjet -> this is not model agnostic !!!
       # check that current pt scheme is correct
-    return pt, eta, phi
+
+    properties = [pt, eta, phi]
+    property_names = ["pt", "eta", "phi"]
+
+    # add all other fields
+    fields = pfcands.fields
+    for field in fields: 
+        if field != "pt" and field != "eta" and field != "phi": 
+            properties.append(ak.to_numpy(pfcands[field]).flatten())
+            property_names.append(field)
+
+    return properties, property_names
 
 def load_root(filepath):
-    data = {'pT':[], 'eta':[], 'phi':[]}
+    data = None
     print(filepath)
     if os.path.splitext((filepath))[-1] == ".root" and os.path.isfile(filepath):
         events = NanoEventsFactory.from_root(filepath, schemaclass = PFNanoAODSchema).events()
 
     for i in tqdm(range(len(events))):
-        pt, eta, phi = process_event_root(events[i:i+1])
-        if pt != -1: 
-            data['pT'].append(pt)
-            data['eta'].append(eta)
-            data['phi'].append(phi)
-
-        if len(data['pT']) == 20: 
-            print("20 events reached")
-            return pd.DataFrame.from_dict(data)
-    else:
-        pass
+        properties, property_names = process_event_root(events[i:i+1])
+        if properties != -1 and data == None: 
+            data = {property_name: [] for property_name in property_names}
+            for i, prop in enumerate(properties): 
+                data[property_names[i]].append(prop)
+        elif properties != -1: 
+            for i, prop in enumerate(properties): 
+                data[property_names[i]].append(prop)
+            if len(data['pt']) == 20: 
+                print("20 events reached")
+                return pd.DataFrame.from_dict(data)
 
     return pd.DataFrame.from_dict(data)
 
@@ -90,7 +101,7 @@ def main(datapath, savepath, datatype, filetype):
         load_h5()
     else:
         df = load_root(datapath)
-    print(df)
+
     df.to_pickle(savepath + "/" + datatype + ".pkl")
 
     return
@@ -115,7 +126,7 @@ if "__main__":
 
 
 # example call: 
-# python preprocess.py --data_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root' --save_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data' --data_type 'signal' --file_type '.root'
+# python preprocess.py --data_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root' --save_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data' --data_type 'signal' --file_type '.root'
     
 # background ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
 # signal = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root'

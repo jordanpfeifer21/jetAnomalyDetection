@@ -14,8 +14,13 @@ FATJET_DELTA_PHI_BOUND = 0.1
 FATJET_DELTA_PT_BOUND = 1
 
 # for histogram binning
+# this requires eta bounds are the same as phi bounds 
 ETA_MIN = -0.8 
 ETA_MAX = 0.8 
 PHI_MIN = -0.8 
 PHI_MAX = 0.8 
 INCR = 0.05 
+BINS = int(abs(ETA_MIN - ETA_MAX)/INCR)
+
+# for graph structure 
+CLOSEST_NEIGHBORS = 10 
