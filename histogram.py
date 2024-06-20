@@ -21,5 +21,6 @@ def plot_histogram(hist, save_file_name, title):
     ax.set_title(title)  
     plt.setp(ax.spines.values(), alpha = 0)
     plt.savefig(save_file_name)
+    plt.close(fig)
       
 

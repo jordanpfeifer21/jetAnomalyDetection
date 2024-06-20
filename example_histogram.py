@@ -7,5 +7,16 @@ signal_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/process
 background = pd.read_pickle(background_file)
 signal = pd.read_pickle(signal_file)
 
-hist = make_histogram(background['eta'][1], background['phi'][1], background['pT'][1])
-plot_histogram(hist, "plots/ex_hist.png", "example background pT")
+idx = 1
+eta = background['eta'][idx]
+phi = background['phi'][idx]
+
+for prop_name in background.columns: 
+        if prop_name != "eta" and prop_name != "phi":
+            background_prop = background[prop_name][idx]
+            if len(background_prop) == len(eta): 
+                hist = make_histogram(eta, phi, background_prop)
+                plot_histogram(hist, "plots/histograms/ex_hist_" + prop_name + ".png", "example background " + prop_name)
+                
+
+
