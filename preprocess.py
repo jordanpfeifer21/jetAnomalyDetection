@@ -73,21 +73,22 @@ def process_event_root(events):
 def load_root(filepath):
     data = None
     print(filepath)
+
     if os.path.splitext((filepath))[-1] == ".root" and os.path.isfile(filepath):
         events = NanoEventsFactory.from_root(filepath, schemaclass = PFNanoAODSchema).events()
 
-    for i in tqdm(range(len(events))):
-        properties, property_names = process_event_root(events[i:i+1])
-        if properties != -1 and data == None: 
-            data = {property_name: [] for property_name in property_names}
-            for i, prop in enumerate(properties): 
-                data[property_names[i]].append(prop)
-        elif properties != -1: 
-            for i, prop in enumerate(properties): 
-                data[property_names[i]].append(prop)
-            if len(data['pt']) == 20: 
-                print("20 events reached")
-                return pd.DataFrame.from_dict(data)
+        for i in tqdm(range(len(events))):
+            properties, property_names = process_event_root(events[i:i+1])
+            if properties != -1 and data == None: 
+                data = {property_name: [] for property_name in property_names}
+                for i, prop in enumerate(properties): 
+                    data[property_names[i]].append(prop)
+            elif properties != -1: 
+                for i, prop in enumerate(properties): 
+                    data[property_names[i]].append(prop)
+                if len(data['pt']) == 20: 
+                    print("20 events reached")
+                    return pd.DataFrame.from_dict(data)
 
     return pd.DataFrame.from_dict(data)
 
