@@ -1,0 +1,15 @@
+artifact_uri: file:///isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/scratch/mlruns/0/60e12c813b604d1a9320046aa4725f89/artifacts
+end_time: 1718982371350
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 60e12c813b604d1a9320046aa4725f89
+run_name: ambitious-shrike-144
+run_uuid: 60e12c813b604d1a9320046aa4725f89
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1718982304056
+status: 3
+tags: []
+user_id: jpfeife2

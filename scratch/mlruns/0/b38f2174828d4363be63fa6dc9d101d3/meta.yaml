@@ -1,0 +1,15 @@
+artifact_uri: file:///isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/scratch/mlruns/0/b38f2174828d4363be63fa6dc9d101d3/artifacts
+end_time: 1719224395441
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: b38f2174828d4363be63fa6dc9d101d3
+run_name: lyrical-skink-726
+run_uuid: b38f2174828d4363be63fa6dc9d101d3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1719224390687
+status: 3
+tags: []
+user_id: jpfeife2

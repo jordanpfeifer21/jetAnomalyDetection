@@ -1,0 +1,15 @@
+artifact_uri: file:///isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/scratch/mlruns/0/cc50f1eccba7479694327a0821bf8ec6/artifacts
+end_time: 1719231856271
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: cc50f1eccba7479694327a0821bf8ec6
+run_name: stylish-loon-225
+run_uuid: cc50f1eccba7479694327a0821bf8ec6
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1719231849910
+status: 3
+tags: []
+user_id: jpfeife2

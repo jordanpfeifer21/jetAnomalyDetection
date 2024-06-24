@@ -1,0 +1,15 @@
+artifact_uri: file:///isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/scratch/mlruns/0/ffb44c7ebd254150a83961e3f923c161/artifacts
+end_time: 1718980719897
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ffb44c7ebd254150a83961e3f923c161
+run_name: clumsy-rook-462
+run_uuid: ffb44c7ebd254150a83961e3f923c161
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1718980478169
+status: 4
+tags: []
+user_id: jpfeife2

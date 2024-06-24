@@ -1,0 +1,15 @@
+artifact_uri: file:///isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/scratch/mlruns/0/3333316e5d644615840d1b56dd62e177/artifacts
+end_time: 1718980387668
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 3333316e5d644615840d1b56dd62e177
+run_name: tasteful-croc-429
+run_uuid: 3333316e5d644615840d1b56dd62e177
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1718980387528
+status: 4
+tags: []
+user_id: jpfeife2

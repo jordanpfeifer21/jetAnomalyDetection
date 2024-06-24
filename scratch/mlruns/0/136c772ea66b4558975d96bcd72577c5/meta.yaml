@@ -1,0 +1,15 @@
+artifact_uri: file:///isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/scratch/mlruns/0/136c772ea66b4558975d96bcd72577c5/artifacts
+end_time: 1719231849879
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 136c772ea66b4558975d96bcd72577c5
+run_name: indecisive-trout-383
+run_uuid: 136c772ea66b4558975d96bcd72577c5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1719231845436
+status: 3
+tags: []
+user_id: jpfeife2

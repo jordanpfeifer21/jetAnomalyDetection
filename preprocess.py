@@ -36,6 +36,11 @@ def get_fatjets(events):
     if (len(ak.argsort(fatjets.pt, axis=1)[0])) == 0: 
       return -1, -1
     
+    try: 
+        ak.firsts((fatjets[ak.argsort(fatjets.pt, axis=1)]))
+    except: 
+        return -1, 1
+    
     fatjets = ak.firsts(fatjets[ak.argsort(fatjets.pt, axis=1)])
 
     for j, fj in enumerate(store_fj):
@@ -85,9 +90,9 @@ def load_root(filepath):
         elif properties != -1: 
             for i, prop in enumerate(properties): 
                 data[property_names[i]].append(prop)
-            if len(data['pt']) == 20: 
-                print("20 events reached")
-                return pd.DataFrame.from_dict(data)
+            # if len(data['pt']) == 20: 
+            #     print("20 events reached")
+            #     return pd.DataFrame.from_dict(data)
 
     return pd.DataFrame.from_dict(data)
 
@@ -126,7 +131,7 @@ if "__main__":
 
 
 # example call: 
-# python preprocess.py --data_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root' --save_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data' --data_type 'signal' --file_type '.root'
+# python preprocess.py --data_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root' --save_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data' --data_type 'background' --file_type '.root'
     
 # background ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
 # signal = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root'

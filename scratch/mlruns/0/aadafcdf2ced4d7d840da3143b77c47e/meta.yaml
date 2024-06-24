@@ -1,0 +1,15 @@
+artifact_uri: file:///isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/scratch/mlruns/0/aadafcdf2ced4d7d840da3143b77c47e/artifacts
+end_time: 1718982425641
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: aadafcdf2ced4d7d840da3143b77c47e
+run_name: enchanting-hound-987
+run_uuid: aadafcdf2ced4d7d840da3143b77c47e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1718982371391
+status: 3
+tags: []
+user_id: jpfeife2

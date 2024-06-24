@@ -1,0 +1,15 @@
+artifact_uri: file:///isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/scratch/mlruns/0/1e92f66bc8e843dab1e851fb589b3584/artifacts
+end_time: 1719236820179
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 1e92f66bc8e843dab1e851fb589b3584
+run_name: defiant-hare-83
+run_uuid: 1e92f66bc8e843dab1e851fb589b3584
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1719236815890
+status: 3
+tags: []
+user_id: jpfeife2

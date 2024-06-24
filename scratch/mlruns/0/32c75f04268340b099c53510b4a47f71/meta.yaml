@@ -1,0 +1,15 @@
+artifact_uri: file:///isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/scratch/mlruns/0/32c75f04268340b099c53510b4a47f71/artifacts
+end_time: 1718982195281
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 32c75f04268340b099c53510b4a47f71
+run_name: funny-gull-893
+run_uuid: 32c75f04268340b099c53510b4a47f71
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1718982194899
+status: 4
+tags: []
+user_id: jpfeife2
