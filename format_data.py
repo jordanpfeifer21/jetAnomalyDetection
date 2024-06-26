@@ -12,14 +12,22 @@ from dgl.dataloading import GraphDataLoader
 from dgl.data import DGLDataset
 
 
+#make 2D histogram of the data
 def format_2D(data):
+    print("==============================")
+    print(data["eta"][0])
+
     hist = [make_histogram(data['eta'][i], data['phi'][i],data['pt'][i]) for i in range(data.shape[0])]
     hist = np.reshape(hist, (-1, c.BINS, c.BINS, 1))
     return hist
 
+def get_formatted_shape(data):
+    return data.shape[1:5]
+    #format_2D(data).shape[0]
+
 def load_files(background_file, signal_file):
-    background = pd.read_pickle(background_file)
-    signal = pd.read_pickle(signal_file) 
+    background = pd.read(background_file)
+    signal = pd.read(signal_file) 
     return background, signal 
 
 
@@ -57,10 +65,10 @@ def load_files(background_file, signal_file):
     signal = pd.read_pickle(signal_file) 
     return background, signal 
 
-background_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/background.pkl'
-signal_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/signal.pkl'
-background = pd.read_pickle(background_file)
-signal = pd.read_pickle(signal_file)
+#background_file = '/isilon/export/home/rpankaj/jetAD/data/processed_data/background.pkl'
+#signal_file = '/isilon/export/home/rpankaj/jetAD/data/processed_data/signal.pkl'
+#background = pd.read_pickle(background_file)
+#signal = pd.read_pickle(signal_file)
 
 
 
