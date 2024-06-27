@@ -33,4 +33,5 @@ def plot_anomaly_score(model):
     plt.title('Anomaly Score Distribution')
     plt.legend()
     plt.savefig('Anomaly Score Distribution')
+    plt.show()
     plt.clf()
