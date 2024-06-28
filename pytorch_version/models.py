@@ -18,6 +18,8 @@ class Autoencoder(torch.nn.Module):
     def __init__(self, shape, latent_dim = 12):
         super().__init__()
         
+        self.anomaly_scores = None
+        self.test_scores = None
 
         self.shape = shape
 
@@ -89,7 +91,7 @@ def test_loop(dataloader, model, loss_function):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
-    summary(model, (32,32,1))
+    #summary(model, (32,32,1))
     model.eval()
     test_loss = 0
 
@@ -98,6 +100,7 @@ def test_loop(dataloader, model, loss_function):
     X = torch.from_numpy(dataloader)
     X = X.to(device)
     pred = model(X)
+
     test_loss += loss_function(pred, X).item() # X -> y
     test_loss /= len(dataloader)
 

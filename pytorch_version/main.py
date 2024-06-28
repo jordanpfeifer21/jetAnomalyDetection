@@ -5,6 +5,7 @@ from torch.optim import Adam
 from torch.nn import MSELoss
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from model_analysis import mse, plot_anomaly_score_distribution, plot_roc
 
 
 #================ Set Up data =======
@@ -50,6 +51,8 @@ train_loss, test_loss = train_model(
 print("--------------------------------")
 print("Train Loss: ", train_loss)
 print("Test Loss: ", test_loss)
+
+
 #============== Save Analysis========
 print(1)
 plt.plot(train_loss, label="Training Loss")
@@ -64,4 +67,8 @@ plt.title('Training and Validation Losses')
 plt.savefig('Training and Validation Losses')
 print(5)
 plt.clf()
+
+mse(model, test_data, signal)
+plot_anomaly_score_distribution(model)
+plot_roc(model, test_data, signal)
 
