@@ -24,21 +24,21 @@ def plot_histogram(hist, save_file_name, title):
     plt.savefig(save_file_name)
     plt.close(fig)
 
-background_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/background.pkl'
-signal_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/signal.pkl'
-background = pd.read_pickle(background_file)
-signal = pd.read_pickle(signal_file)
+# background_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/background.pkl'
+# signal_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/signal.pkl'
+# background = pd.read_pickle(background_file)
+# signal = pd.read_pickle(signal_file)
 
-idx = 1
-eta = background['eta'][idx]
-phi = background['phi'][idx]
+# idx = 1
+# eta = background['eta'][idx]
+# phi = background['phi'][idx]
 
-for prop_name in background.columns: 
-        if prop_name != "eta" and prop_name != "phi":
-            background_prop = background[prop_name][idx]
-            if len(background_prop) == len(eta): 
-                hist = make_histogram(eta, phi, background_prop)
-                plot_histogram(hist, "plots/histograms/ex_hist_" + prop_name + ".png", "example background " + prop_name)
+# for prop_name in background.columns: 
+#         if prop_name != "eta" and prop_name != "phi":
+#             background_prop = background[prop_name][idx]
+#             if len(background_prop) == len(eta): 
+#                 hist = make_histogram(eta, phi, background_prop)
+#                 plot_histogram(hist, "plots/histograms/ex_hist_" + prop_name + ".png", "example background " + prop_name)
                 
 def plot_avg(data, filetype):
     eta = data['eta']
@@ -53,8 +53,8 @@ def plot_avg(data, filetype):
                 avg = np.mean(hist_array, axis=0)
                 plot_histogram(avg, "plots/histograms/avg_"+ filetype + "_" + prop_name + ".png", "average_" + filetype + "_" + prop_name)
             
-plot_avg(background, "background")
-plot_avg(signal, "signal")
+# plot_avg(background, "background")
+# plot_avg(signal, "signal")
 
 def plot_property_distribution(background, signal):
     for prop_name in background.columns: 
@@ -82,5 +82,5 @@ def plot_property_distribution(background, signal):
 
             plt.close(fig)
 
-plot_property_distribution(background, signal)
+# plot_property_distribution(background, signal)
 

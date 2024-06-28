@@ -1,9 +1,9 @@
-from models import Autoencoder 
-import tensorflow as tf 
-import numpy as np 
+# from models import Autoencoder 
+# import tensorflow as tf 
+# import numpy as np 
 from format_data import format_2D, load_files
-from model_analysis import plot_anomaly_score, loss, roc
-from sklearn.model_selection import train_test_split
+# from model_analysis import plot_anomaly_score, loss, roc
+# from sklearn.model_selection import train_test_split
 
 
 def train(model, train_data, test_data):
@@ -48,22 +48,29 @@ n = len(properties) # number of properties
 hp_units = 12
 
 '''''''''''''''''''''''''''''''''''' 
-
-background_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/background.pkl'
-signal_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/signal.pkl'
+import numpy as np 
+background_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/background_small.pkl'
+signal_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/signal_small.pkl'
+print("loading files")
 background, signal = load_files(background_file, signal_file)
-background = format_2D(background).astype('float32')/255.0
-signal = format_2D(signal).astype('float32')/255.0
+# print(background['pdgId'])
+flattened_list = [item for sublist in np.array(background.iloc[:]['pdgId']) for item in sublist]
+print(set(flattened_list))
+flattened_list = [item for sublist in np.array(signal.iloc[:]['pdgId']) for item in sublist]
+print(set(flattened_list))
+# print(np.unique(np.reshape(background.iloc[:]['pdgId'], (-1, 1)).flatten()))
+# background = format_2D(background).astype('float32')/255.0
+# signal = format_2D(signal).astype('float32')/255.0
 
-input_shape = background[0].shape
-train_qcd, test_qcd = train_test_split(background, test_size=0.5)
+# input_shape = background[0].shape
+# train_qcd, test_qcd = train_test_split(background, test_size=0.5)
 
-model = Autoencoder()
-model(tf.keras.Input(shape=input_shape))
-model.summary()
-train(model, train_qcd, test_qcd)
-loss(model) 
-mse(model, test_qcd, signal) 
-plot_anomaly_score(model)
-roc(model, test_qcd, signal)
+# model = Autoencoder()
+# model(tf.keras.Input(shape=input_shape))
+# model.summary()
+# train(model, train_qcd, test_qcd)
+# loss(model) 
+# mse(model, test_qcd, signal) 
+# plot_anomaly_score(model)
+# roc(model, test_qcd, signal)
 
