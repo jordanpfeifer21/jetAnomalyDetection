@@ -1,6 +1,6 @@
 
 
-from models import Autoencoder # import the autoencoder from the models file
+from models import Autoencoder, VariableAutoencoder # import the autoencoder from the models file
 import tensorflow as tf # import tensorflow
 import numpy as np  # import numpy
 from format_data import format_2D, load_files, get_formatted_shape #import functions from format_data file
@@ -18,6 +18,7 @@ def train(model, train_data, test_data):
                     loss='mse',
                     metrics=['accuracy']) #configure the model for training (define loss function and metric)
     num_parameters = model.count_params() #find the number of parameters
+    print(train_data.shape)
     print("number of training events: " + str(train_data.shape[0]))
     print('number of parameters: ' + str(num_parameters))
 
@@ -83,33 +84,32 @@ def reshape_data(file_name, n_properties=2):
     return final_data, input_shape
 qcd_file = '/isilon/export/home/rpankaj/jetAD/data/Ekin/output_array-qcd-61440-dz-pT.npy'
 background, input_shape = reshape_data(qcd_file)
+
 train_qcd, test_qcd = train_test_split(background, test_size=0.5)
 signal = reshape_data('/isilon/export/home/rpankaj/jetAD/data/Ekin/output_array-HtoBB-61440-dz-pT.npy')[0]
 
-print(background.dtype.names)
-#print(signal)
-print(type(background))
-
+'''
 #define data files
-#background_file = '/isilon/export/home/rpankaj/jetAD/data/processed_data/background.pkl'
-#signal_file = '/isilon/export/home/rpankaj/jetAD/data/processed_data/signal.pkl'
-#background, signal = load_files(background_file, signal_file)
-#background = format_2D(background).astype('float32')/255.0
+background_file = '/isilon/export/home/rpankaj/jetAD/data/processed_data/background.pkl'
+signal_file = '/isilon/export/home/rpankaj/jetAD/data/processed_data/signal.pkl'
+background, signal = load_files(background_file, signal_file)
+background = format_2D(background).astype('float32')/255.0
 
 
 #make a 2D histogram of the data
-#signal = format_2D(signal).astype('float32')/255.0
+signal = format_2D(signal).astype('float32')/255.0
 
-#input_shape = get_formatted_shape(background)
+input_shape = get_formatted_shape(background)
 
-#train_qcd, test_qcd = train_test_split(background, test_size=0.5) #separate the data 50/50 between testing and trainging
+train_qcd, test_qcd = train_test_split(background, test_size=0.5) #separate the data 50/50 between testing and trainging
+'''
+
+print("---------------------------------")
+print(train_qcd.shape)
+print("+++++++++++++++++++++++++++++++")
 
 
-
-
-
-
-model = Autoencoder(input_shape) #make an instange of the model obect
+model = VariableAutoencoder(input_shape) #make an instange of the model obect
 model(tf.keras.Input(shape=input_shape))
 
 model.summary()

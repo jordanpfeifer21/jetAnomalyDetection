@@ -56,6 +56,7 @@ class Autoencoder(torch.nn.Module):
         decoded = self.decoder(encoded)
         return decoded
 
+
 def train_loop(dataloader, model, loss_func, optimizer, batch_size):
 
     device = torch.device("cuda" if cuda.is_available() else "cpu")
