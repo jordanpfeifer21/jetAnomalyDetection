@@ -14,6 +14,8 @@ def train(model, train_data, test_data):
     """ Training routine. """
     learning_rate = .0001 #define the learning rate
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate) #define the optimizer functions
+
+
     model.compile(optimizer=optimizer,
                     loss='mse',
                     metrics=['accuracy']) #configure the model for training (define loss function and metric)
@@ -36,7 +38,7 @@ def train(model, train_data, test_data):
     checkpoint_callback = ModelCheckpoint(filepath='model_d0_dz/weights_epoch_{epoch:02d}.tf', save_freq='epoch', period=5) #save the weights of the model with the lowest loss
 
     #train the model and store the loss values
-    model.history = model.fit(train_data, train_data, epochs=epochs, batch_size=500, validation_data=(test_data, test_data), callbacks=[early_stopping, checkpoint_callback, lr_scheduler_callback])
+    model.history = model.fit(train_data, train_data, epochs=epochs, batch_size=500000, validation_data=(test_data, test_data), callbacks=[early_stopping, checkpoint_callback, lr_scheduler_callback])
 
 
 
@@ -48,21 +50,29 @@ def train(model, train_data, test_data):
 #find the mse    
 def mse(model, test_data, anomaly_data): 
     reconstructed_anomaly = model.predict(anomaly_data) #pass known anomaly data into model
-    model.anomaly_scores = np.mean(np.square(anomaly_data - reconstructed_anomaly), axis=(1,2,3)) #compute the anomaly scores
+    anomaly_loss = np.mean(np.square(anomaly_data - reconstructed_anomaly), axis=(1,2,3)) #compute the anomaly scores
 
     #pass known background data into the model
     reconstructed_test = model.predict(test_data)
-    model.test_scores = np.mean(np.square(test_data - reconstructed_test), axis=(1,2,3))
+    test_loss = np.mean(np.square(test_data - reconstructed_test), axis=(1,2,3))
 
+    model.anomaly_scores = anomaly_loss
+    model.test_scores = test_loss
     #print mse over anomolous and non anomolus data
     print('anomaly MSE (loss) over all anomalous inputs: ', np.mean(model.anomaly_scores)) 
     print('not anomaly MSE (loss) over all non-anomalous inputs: ', np.mean( model.test_scores))
 
 ''' IMPORTANT THINGS TO CHANGE '''
+def kl_loss(mean, logvar):
+    kl_loss = -0.5 * K.sum(1+log_var - K.square(mean) - K.exp(logvar), axis = 1)
+    return kl_loss
+def vae_loss(model, y_true, y_pred, mean, logvar):
+    r_loss = mse_loss(model, y_pred, y_true)
+    kl_loss = kl_loss(mean, logvar)
+    return r_loss + kl_loss
+epochs = 10
 
-epochs = 50
-
-properties = ['pT'] # must be in order of file 
+properties = ['pT', 'dz'] # must be in order of file 
 
 n = len(properties) # number of properties 
 
@@ -109,11 +119,17 @@ print(train_qcd.shape)
 print("+++++++++++++++++++++++++++++++")
 
 
-model = VariableAutoencoder(input_shape) #make an instange of the model obect
+model = Autoencoder(input_shape) #make an instange of the model obect
 model(tf.keras.Input(shape=input_shape))
 
 model.summary()
-
+from keras_sequential_ascii import keras2ascii
+#keras2ascii(model)
+print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+print(type(train_qcd))
+print(type(test_qcd))
+print(type(signal))
+print("\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\")
 train(model, train_qcd, test_qcd) #train the model
 loss(model) #plot the loss for the model
 mse(model, test_qcd, signal) #calculate the mean squared error
