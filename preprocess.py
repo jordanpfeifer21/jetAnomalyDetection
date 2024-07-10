@@ -67,6 +67,7 @@ def process_event_root(events):
     property_names = ["pt", "eta", "phi"]
 
     # add all other fields
+    print(events.LHE.HT)
     fields = pfcands.fields
     for field in fields: 
         if field != "pt" and field != "eta" and field != "phi": 
@@ -83,17 +84,19 @@ def load_root(filepath):
         events = NanoEventsFactory.from_root(filepath, schemaclass = PFNanoAODSchema).events()
 
         for i in tqdm(range(len(events))):
-            properties, property_names = process_event_root(events[i:i+1])
-            if properties != -1 and data == None: 
-                data = {property_name: [] for property_name in property_names}
-                for i, prop in enumerate(properties): 
-                    data[property_names[i]].append(prop)
-            elif properties != -1: 
-                for i, prop in enumerate(properties): 
-                    data[property_names[i]].append(prop)
-                if len(data['pt']) == 20: 
-                    print("20 events reached")
-                    return pd.DataFrame.from_dict(data)
+            e = events[i:i+1]
+            if 400 <= e.LHE.HT < 500: 
+                properties, property_names = process_event_root(events[i:i+1])
+                if properties != -1 and data == None: 
+                    data = {property_name: [] for property_name in property_names}
+                    for i, prop in enumerate(properties): 
+                        data[property_names[i]].append(prop)
+                elif properties != -1: 
+                    for i, prop in enumerate(properties): 
+                        data[property_names[i]].append(prop)
+                    # if len(data['pt']) == 20: 
+                    #     print("20 events reached")
+                    #     return pd.DataFrame.from_dict(data)
 
     return pd.DataFrame.from_dict(data)
 
@@ -132,7 +135,7 @@ if "__main__":
 
 
 # example call: 
-# python preprocess.py --data_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root' --save_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data' --data_type 'background' --file_type '.root'
+# python preprocess.py --data_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root' --save_path '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data' --data_type 'background' --file_type '.root'
     
 # background ='/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/QCD/300to500/nano_mc2018_12_a677915bd61e6c9ff968b87c36658d9d_0.root'
 # signal = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/data/WJET/400to600/nano_mc2018_1-1.root'
