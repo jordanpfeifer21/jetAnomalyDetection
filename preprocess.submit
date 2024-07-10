@@ -1,0 +1,6 @@
+executable = /isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/preprocess.sh
+
+output = /isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/logs/main.out 
+error = /isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/logs/main.err 
+log = /isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/jetAnomalyDetection/logs/main.log 
+queue

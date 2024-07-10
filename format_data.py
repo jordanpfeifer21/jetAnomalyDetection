@@ -1,111 +1,93 @@
 import pandas as pd 
-from histogram import make_histogram
+from data_analysis import make_histogram
 import numpy as np 
-import dgl #deep graph network that will make integrating graphs easier
+# import dgl #deep graph network that will make integrating graphs easier
 import torch
 from scipy.spatial.distance import cdist
 import constants as c
-import dgl.nn.pytorch as dglnn
 import torch.nn as nn 
 import torch.nn.functional as F
-from dgl.dataloading import GraphDataLoader
+from sklearn import preprocessing
+
+def one_hot_encode_list(unique_values, array):
+    enc = preprocessing.OneHotEncoder(categories = [unique_values], handle_unknown="error")
+    one_hot_lists = {value: [] for value in unique_values}
+
+    for arr in array: 
+        encoded = enc.fit_transform(np.array(arr).reshape(-1,1)).toarray()
+        for i, value in enumerate(unique_values):
+            one_hot_lists[value].append(encoded[:, i].tolist())
+
+    return one_hot_lists
 
 
-def format_2D(data):
-    hist = [make_histogram(data['eta'][i], data['phi'][i],data['pt'][i]) for i in range(data.shape[0])]
-    hist = np.reshape(hist, (-1, c.BINS, c.BINS, 1))
-    return hist
+#make 2D histogram of the data
+def format_2D(data, properties):
+    hists = []
+    n_properties = len(properties)
+    for prop in properties: 
+        if prop == 'pdgId': 
+            flattened_list = [item for sublist in data['pdgId'] for item in sublist]
+            unique_values_list = sorted(list(set(flattened_list)))
+            value_to_index = {value: index + 1 for index, value in enumerate(unique_values_list)}
+            one_hot_dict = one_hot_encode_list(unique_values_list, data['pdgId'])
+            particle_ids = []
+            for key in one_hot_dict: 
+                one_hot_list = one_hot_dict[key]
+                # hists.append([make_histogram(data['eta'][i], data['phi'][i],
+                #                     [value_to_index[number] for number in one_hot_list[i]]) for i in range(data.shape[0])])
+                hists.append([make_histogram(data['eta'][i], data['phi'][i], one_hot_list[i]) for i in range(data.shape[0])])
+                particle_ids.append(key)
+            n_properties += len(hists) - 1
+       
+        elif prop == 'dzErr': 
+            # TODO: fix this so that it is always x/x_err if err exists
+            dz = [p / z for sublist1, sublist2 in zip(data['dz'], data['dzErr']) for p, z in zip(sublist1, sublist2) if z >=0]
+            dz = np.array(dz)[np.abs(dz) + np.mean(dz) <= 3*np.std(dz)].flatten()
+            scaler = preprocessing.StandardScaler(with_mean=False).fit(np.array(dz).reshape(-1,1))
+            dz = scaler.transform(np.array(dz).reshape(-1,1))
+            hist_list = []
+            for i in range(data.shape[0]):
+                prop_data = pd.to_numeric(data['dz'][i])/pd.to_numeric(data['dzErr'][i])
+                valid_indices = np.array(data['dzErr'][i]) >= 0 
+                prop_data = np.array(prop_data)[valid_indices]
 
-def format_graph(data): 
-    pt = data['pt'].tolist()
-    eta = data['eta'].tolist()
-    phi = data['phi'].tolist()
-    
-    graph = []
-    for i in range(len(pt)): 
-        nodes = []
-        for j in range(len(pt[i])):
-            nodes.append([pt[i][j], eta[i][j], phi[i][j]])
-        nodes = np.reshape(nodes, (-1, 3))
-        graph.append(nodes)
+                try: 
+                    dz_scaled = scaler.transform(prop_data.reshape(-1,1))
+                    within_3sigma_indices = (np.abs(dz_scaled) <= 3).flatten()
+                    filtered_eta = np.array(data['eta'][i])[valid_indices][within_3sigma_indices].flatten()
+                    filtered_phi = np.array(data['phi'][i])[valid_indices][within_3sigma_indices].flatten()
+                    filtered_dz = np.array(dz_scaled)[within_3sigma_indices].flatten()
+                    hist_list.append(make_histogram(filtered_eta, filtered_phi, filtered_dz))
+                except: 
+                    dz_scaled = np.zeros(prop_data)
+                    print('error')
+                    hist_list.append(make_histogram([0], [0], [0]))
+                
+            hists.append(hist_list)
+            # hists.append([make_histogram(data['eta'][i], data['phi'][i], pd.to_numeric(data['dz'][i])/pd.to_numeric(data['dzErr'][i])) for i in range(data.shape[0])])
 
-    return graph 
+        else: 
+            flattened_list = [item for sublist in data[prop] for item in sublist]
+            # scaler = preprocessing.StandardScaler().fit(np.array(flattened_list).reshape(-1,1))
+            unique_values_list = sorted(list(set(flattened_list)))
+            # print("max value " + prop + ': ' + str(np.max(unique_values_list)))
+            # print("min value " + prop + ': ' + str(np.min(unique_values_list)))
+
+            if 0.0 in unique_values_list: 
+                print('warning, 0 in data will cause incorrect data translation to histograms')
+            hists.append([make_histogram(data['eta'][i], data['phi'][i], (np.array(data[prop][i]) * 10).flatten()) for i in range(data.shape[0])])
+            # print("warning: multiplying by 10")
+    total_hist = np.stack((hists), axis=-1)
+    total_hist = np.reshape(total_hist, (-1, c.BINS, c.BINS, n_properties)).astype('float32')
+
+    print("Length of data: ", len(total_hist))
+    return total_hist
+
+
 
 def load_files(background_file, signal_file):
     background = pd.read_pickle(background_file)
     signal = pd.read_pickle(signal_file) 
     return background, signal 
-
-# background_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/background.pkl'
-# signal_file = '/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data/signal.pkl'
-# background, signal = load_files(background_file, signal_file)
-
-# two_dimensional_background, two_dimensional_signal = format_2D(background), format_2D(signal)
-# graph_background, graph_signal = format_graph(background), format_graph(signal)
-
-
-def make_graph(pt, eta, phi): 
-    num_nodes = len(pt)
-
-    g = dgl.DGLGraph()
-
-    node_pairs = np.column_stack((eta, phi))
-
-    distances = cdist(node_pairs, node_pairs)
-    for i in range(num_nodes): 
-        closest_indices = np.argsort(distances[i][1:c.CLOSEST_NEIGHBORS]) # add edges between the 10 closest nodes 
-        g.add_edges(i, closest_indices)
-        g.add_edges(closest_indices, i)
-    pt = np.reshape(pt, (-1, 1))
-    feat = torch.tensor(node_pairs)
-    g.ndata['feat'] = feat # is this better than individual eta and phi? what exactly is feat? 
-    g.ndata['pt'] = torch.tensor(pt)
-    # print(g)
-    return g 
-
-def get_graphs(data):
-    graphs = []
-    for i in range(len(data['eta'].tolist())): 
-        pt = data['pt'][i]
-        eta = data['eta'][i]
-        phi = data['phi'][i]
-        graphs.append(make_graph(pt, eta, phi))
-    return graphs 
-
-# graphs = get_graphs(background) # list of graphs 
-# bg = dgl.batch(graphs) # combines graphs together 
-
-
-class Classifier(nn.Module): 
-    def __init__(self, in_dim, hidden_dim, n_classes):
-        super(Classifier, self).__init__()
-        self.conv1 = dglnn.GraphConv(in_dim, hidden_dim)
-        self.conv2 = dglnn.GraphConv(hidden_dim, hidden_dim)
-        self.classify = nn.Linear(hidden_dim, n_classes)
-
-    def forward(self, g, h):
-        # Apply graph convolution and activation.
-        h = F.relu(self.conv1(g, h))
-        h = F.relu(self.conv2(g, h))
-        with g.local_scope():
-            g.ndata['h'] = h
-            # Calculate graph representation by average readout.
-            hg = dgl.mean_nodes(g, 'h')
-            return self.classify(hg)
-
-# dataset = bg
-# # labels = np.zeroS
-# data = dgl.load_graphs("./data.bin", idx_list=None)
-# print(data)
-    
-# model = Classifier(7, 20, 5)
-# opt = torch.optim.Adam(model.parameters())
-# for epoch in range(20):
-#     for batched_graph, labels in dataloader:
-#         feats = batched_graph.ndata['attr']
-#         logits = model(batched_graph, feats)
-#         loss = F.cross_entropy(logits, labels)
-#         opt.zero_grad()
-#         loss.backward()
-#         opt.step()
 
