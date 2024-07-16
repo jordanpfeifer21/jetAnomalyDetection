@@ -1,5 +1,5 @@
 from format_data import format_2D
-from models import Autoencoder, train_model, Transformer, SmallAutoencoder
+from models import Autoencoder, train_model, Transformer, SmallAutoencoder, TestAE
 from torch.optim import Adam
 from torch.nn import MSELoss
 from sklearn.model_selection import train_test_split
@@ -13,15 +13,16 @@ import torch
 import constants as c
 import pandas as pd 
 from model_analysis import plot_loss, plot_anomaly_score, plot_roc
+import glob 
+import os
 
+background_label = "qcd"
+signal_label = "wjet"
+props = ['pdgId']
+data_dir = "/eos/user/j/jopfeife/2024/processed_data"
 
-background_label = "QCD"
-signal_label = "WJet"
-props = ['pt']
-data_dir = "/isilon/data/users/jpfeife2/AutoEncoder-Anomaly-Detection/processed_data"
-
-batch_size = 20
-epochs = 5
+batch_size = 15
+epochs = 25
 initial_lr = 0.001
 weight_decay = 1e-3
 latent_dim = 12
@@ -50,16 +51,27 @@ print("SIGNAL LOADED AND SAVED")
 
 '''
 print("Data Loading ...")
-background = np.load(data_dir + "/background" + prop_string + ".npy", allow_pickle=True).reshape(-1, 32, 32, n_props)
+'''
+background = np.load(data_dir + "/" + prop_string + ".npy", allow_pickle=True).reshape(-1, 32, 32, n_props)
 signal = np.load(data_dir + "/signal" + prop_string + ".npy", allow_pickle=True).reshape(-1, 32, 32, n_props)
+'''
+#print("Background path: ", (data_dir+'/QCD/400to500'), f'*{background_label}*.pkl')
+pkl_files = glob.glob(os.path.join((data_dir+'/QCD/400to500'), f'*{background_label}*.pkl'))
+#print("Background files: ", pkl_files)
+background = pd.concat([pd.read_pickle(file) for file in pkl_files], ignore_index=True)
+background = format_2D(background, props)
+
+pkl_files = glob.glob(os.path.join((data_dir+'/WJET/400to500'), f'*{signal_label}*.pkl'))
+signal = pd.concat([pd.read_pickle(file) for file in pkl_files], ignore_index=True)
+signal = format_2D(signal, props)
+print("FILES LOADED")
 
 print("Background events: ", len(background))
 print("Signal events: ", len(signal))
-# train_data, test_data = train_test_split(background, test_size = 0.2)
-train_data = background
-test_data = background
+train_data, test_data = train_test_split(background, test_size = 0.4)
+
 input_shape = train_data.shape
-n_props = input_shape[-1]
+n_props = input_shape[1]
 print(input_shape)
 
 X_train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=False)
@@ -68,22 +80,26 @@ X_valid_dataloader = DataLoader(signal, batch_size=batch_size, shuffle=False)
 
 print("Data Loaded!")
 
+plt.plot
 
 #=============== Define Model =========
 # model = Autoencoder(input_shape)
 # model =SmallAutoencoder(input_shape, latent_dim=latent_dim)
 # optimizer = Adam(model.parameters(), lr = initial_lr)
 
-model = Transformer(input_size = input_shape, latent_dim=latent_dim)
+print("Input shape: " + str(input_shape))
+model = TestAE(shape = input_shape)
 optimizer = torch.optim.AdamW(model.parameters(), lr=initial_lr, weight_decay=weight_decay)
 
-summary(model, input_size=(batch_size, c.BINS, c.BINS, n_props))
-
+print((batch_size, n_props, c.BINS, c.BINS))
+summary(model, input_size=(batch_size, n_props, c.BINS, c.BINS))
+#print("Input shape:" + str(input_shape))
+#summary(model, input_size = input_shape)
 criterion = MSELoss()
 
 #=============== Run Model =========
 print("Training Model... ")
-torch.set_num_threads(3)
+#torch.set_num_threads(3)
 train_loss, test_loss, signal_loss = train_model(
     train_dataloader = X_train_dataloader, 
     test_dataloader = X_test_dataloader, 
@@ -94,7 +110,7 @@ train_loss, test_loss, signal_loss = train_model(
     epochs = epochs, 
     batch_size = batch_size )
 
-torch.save(model, "model")
+#torch.save(model, "model")
 
 #============== Save Analysis========
 print("Analyzing Results... ")

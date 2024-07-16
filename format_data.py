@@ -3,6 +3,7 @@ from data_analysis import make_histogram
 import numpy as np 
 # import dgl #deep graph network that will make integrating graphs easier
 import torch
+torch.cuda.empty_cache()
 from scipy.spatial.distance import cdist
 import constants as c
 import torch.nn as nn 
@@ -39,7 +40,6 @@ def format_2D(data, properties):
                 hists.append([make_histogram(data['eta'][i], data['phi'][i], one_hot_list[i]) for i in range(data.shape[0])])
                 particle_ids.append(key)
             n_properties += len(hists) - 1
-       
         elif prop == 'dzErr': 
             # TODO: fix this so that it is always x/x_err if err exists
             dz = [p / z for sublist1, sublist2 in zip(data['dz'], data['dzErr']) for p, z in zip(sublist1, sublist2) if z >=0]
@@ -66,7 +66,6 @@ def format_2D(data, properties):
                 
             hists.append(hist_list)
             # hists.append([make_histogram(data['eta'][i], data['phi'][i], pd.to_numeric(data['dz'][i])/pd.to_numeric(data['dzErr'][i])) for i in range(data.shape[0])])
-
         else: 
             flattened_list = [item for sublist in data[prop] for item in sublist]
             # scaler = preprocessing.StandardScaler().fit(np.array(flattened_list).reshape(-1,1))
@@ -79,7 +78,7 @@ def format_2D(data, properties):
             hists.append([make_histogram(data['eta'][i], data['phi'][i], (np.array(data[prop][i]) * 10).flatten()) for i in range(data.shape[0])])
             # print("warning: multiplying by 10")
     total_hist = np.stack((hists), axis=-1)
-    total_hist = np.reshape(total_hist, (-1, c.BINS, c.BINS, n_properties)).astype('float32')
+    total_hist = np.reshape(total_hist, (-1, n_properties, c.BINS, c.BINS)).astype('float32')
 
     print("Length of data: ", len(total_hist))
     return total_hist

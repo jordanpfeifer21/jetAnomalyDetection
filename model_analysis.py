@@ -21,12 +21,14 @@ def process_data(data_list, index, loss, loss_type, loss_fn, model, is_max, prop
     loss_value = np.max(loss) if is_max else np.min(loss)
     
     for i, m in enumerate(data_list[index]):
-        m = m.reshape(-1, c.BINS, c.BINS, model.shape[3])
+        m = m.reshape(-1, model.shape[1], c.BINS, c.BINS)
         reco = model(m)[0]
+        reco = reco.cpu()
 
         for j, prop in enumerate(properties):
-            m_prop = m[0, :, :, j]  # Select channel for the current property
-            reco_prop = reco[:, :, j]  # Corresponding reconstructed property
+            m_prop = m[0, j, :, :] # Select channel for the current property
+            m_prop = m_prop.cpu() 
+            reco_prop = reco[j, :, :]  # Corresponding reconstructed property
             if torch.min(m_prop) < 0.0: 
                 norm = TwoSlopeNorm(vcenter=0.0)
             else: 

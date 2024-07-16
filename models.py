@@ -69,6 +69,7 @@ class SmallAutoencoder(torch.nn.Module):
         super(SmallAutoencoder, self).__init__()
 
         self.shape = shape
+        print(shape)
         self.shape0 = shape[2]
         alpha_init = np.random.randn()
         self.background_test_loss = None 
@@ -86,8 +87,8 @@ class SmallAutoencoder(torch.nn.Module):
             ReLU(alpha_init),
             AvgPool2d(kernel_size=(2, 2), stride=(2, 2), padding=1),
             Flatten(),
-            # Linear(17*2*self.shape[3], latent_dim),
-            Linear(68, latent_dim),
+            Linear(17*2*self.shape[3], latent_dim),
+            #Linear(68, latent_dim),
 
             ReLU(alpha_init)
         )
@@ -107,7 +108,104 @@ class SmallAutoencoder(torch.nn.Module):
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return decoded
+class TestAE(nn.Module):
+    
+    def __init__(self, shape):
+        super(TestAE, self).__init__()
 
+        self.shape = shape
+        self.shape0 = shape[2]
+        alpha_init = np.random.randn()
+        self.background_test_loss = None 
+        self.background_train_loss = None
+        self.signal_loss = None 
+        self.train_hist = [] 
+        self.val_hist = []
+        self.test_data = None 
+        self.signal_data = None
+        alpha_init = np.random.randn()
+
+        adj_var = shape[1]
+        self.encoder = nn.Sequential(
+            # Layer 1: input (32, 32, adj_var), output (16, 16, adj_var*10)
+            nn.Conv2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(True),
+            
+            # Layer 2: input (16, 16, adj_var*10), output (8, 8, adj_var*40)
+            nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(True),
+            
+
+            
+            # Layer 5: input (8, 8, adj_var*10), output (6, 6, adj_var)
+            nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
+           
+        )
+        
+        # Decoder
+        self.decoder = nn.Sequential(
+            # Layer 1: input (6, 6, adj_var), output (8, 8, adj_var*10)
+            nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=1, padding=0),
+            nn.ReLU(True),
+            
+            
+            
+            # Layer 3: input (8, 8, adj_var*20), output (16, 16, adj_var*10)
+            nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ReLU(True),
+            
+            # Layer 4: input (16, 16, adj_var*10), output (32, 32, adj_var)
+            nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
+          
+        )
+        
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
+
+class TestVAE(nn.Module):
+    
+    def __init__(self, shape):
+        super(TestVAE, self).__init__()
+
+        self.shape = shape
+        self.shape0 = shape[2]
+        alpha_init = np.random.randn()
+        self.background_test_loss = None 
+        self.background_train_loss = None
+        self.signal_loss = None 
+        self.train_hist = [] 
+        self.val_hist = []
+        self.test_data = None 
+        self.signal_data = None
+        alpha_init = np.random.randn()
+
+        in_channels = shape[1]
+        # Encoder
+        self.encoder = nn.Sequential(
+            nn.Conv2d(in_channels, 5, kernel_size=3, stride=2, padding=1), # (32, 32, in_channels) -> (16, 16, in_channels)
+            nn.ReLU(alpha_init),
+            nn.Conv2d(5, 5, kernel_size=3, stride=2, padding=1), # (16, 16, in_channels) -> (8, 8, in_channels)
+            nn.ReLU(alpha_init),
+            nn.Conv2d(5, 1, kernel_size=3, stride=2, padding=1), # (8, 8, in_channels) -> (4, 4, in_channels)
+            
+        )
+        
+        # Decoder
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(1, 5, kernel_size=3, stride=2, padding=1, output_padding=1), # (4, 4, in_channels) -> (8, 8, in_channels)
+            nn.ReLU(alpha_init),
+            nn.ConvTranspose2d(5, 5, kernel_size=3, stride=2, padding=1, output_padding=1), # (8, 8, in_channels) -> (16, 16, in_channels)
+            nn.ReLU(alpha_init),
+            nn.ConvTranspose2d(5, in_channels, kernel_size=3, stride=2, padding=1, output_padding=1), # (16, 16, in_channels) -> (32, 32, in_channels)
+          
+        )
+        
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
 class Transformer(nn.Module):
     # Autoencoder with attention.
     def __init__(self, input_size, latent_dim=12, num_heads=2, num_layers=2):
@@ -159,6 +257,8 @@ def train_loop(dataloader, model, loss_fn, optimizer):
     total_loss = []
     for batch, X in enumerate(dataloader):
         # Compute prediction and loss
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        X = X.to(device)
         pred = model(X)
         loss = loss_fn(pred, X)
         total_loss.append(float(loss))
@@ -177,8 +277,12 @@ def eval_loop(dataloader, model, loss_fn, test=False, signal=False):
 
     with torch.no_grad():
         for X in dataloader:
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            X = X.to(device)
             pred = model(X)
+            #print(pred.shape)
             loss.append(float(loss_fn(pred, X)))
+            #print(X.shape)
             data.append(X)
     if test: 
         model.test_data = data 
