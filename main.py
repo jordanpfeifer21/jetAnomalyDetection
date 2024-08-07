@@ -16,6 +16,7 @@ from model_analysis import plot_loss, plot_anomaly_score, plot_roc
 import glob 
 import os
 
+#define training
 background_label = "qcd"
 signal_label = "hbb"
 props = ['pt']
@@ -33,41 +34,25 @@ n_props = len(props)
 
 prop_string = ''.join(['_' + str(prop) for prop in props])
 
-'''
-background_file = data_dir + "/background.pkl"
-signal_file = data_dir + "/signal.pkl"
 
-background = pd.read_pickle(background_file)
-signal = pd.read_pickle(signal_file)
-# plot_property_distribution(background, signal, props)
-
-background = format_2D(background, properties=props)
-np.save(data_dir + "/background" + prop_string + ".npy", background)
-print("BACKGROUND LOADED AND SAVED")
-
-signal = format_2D(signal, properties=props)
-np.save(data_dir + "/signal" + prop_string + ".npy", signal)
-print("SIGNAL LOADED AND SAVED")
-
-'''
 print("Data Loading ...")
-'''
-background = np.load(data_dir + "/" + prop_string + ".npy", allow_pickle=True).reshape(-1, 32, 32, n_props)
-signal = np.load(data_dir + "/signal" + prop_string + ".npy", allow_pickle=True).reshape(-1, 32, 32, n_props)
-'''
-#print("Background path: ", (data_dir+'/QCD/400to500'), f'*{background_label}*.pkl')
+
+#get background data
 pkl_files = glob.glob(os.path.join((data_dir+'/QCD/400to500'), f'*{background_label}*.pkl'))
-#print("Background files: ", pkl_files)
 background = pd.concat([pd.read_pickle(file) for file in pkl_files], ignore_index=True)
 background = format_2D(background, props)
 
+#get signal data
 pkl_files = glob.glob(os.path.join((data_dir+'/HBB/'), f'*{signal_label}*.pkl'))
 signal = pd.concat([pd.read_pickle(file) for file in pkl_files], ignore_index=True)
 signal = format_2D(signal, props)
+
 print("FILES LOADED")
 
+#print lengths of data
 print("Background events: ", len(background))
 print("Signal events: ", len(signal))
+
 train_data, test_data = train_test_split(background, test_size = 0.4)
 
 input_shape = train_data.shape
@@ -83,9 +68,6 @@ print("Data Loaded!")
 plt.plot
 
 #=============== Define Model =========
-# model = Autoencoder(input_shape)
-# model =SmallAutoencoder(input_shape, latent_dim=latent_dim)
-# optimizer = Adam(model.parameters(), lr = initial_lr)
 
 print("Input shape: " + str(input_shape))
 model = TestVAE(shape = input_shape)
@@ -93,13 +75,12 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=initial_lr, weight_decay=we
 
 print((batch_size, n_props, c.BINS, c.BINS))
 summary(model, input_size=(batch_size, n_props, c.BINS, c.BINS))
-#print("Input shape:" + str(input_shape))
-#summary(model, input_size = input_shape)
-criterion = MSELoss()
+
+criterion = MSELoss() #define loss function
 
 #=============== Run Model =========
 print("Training Model... ")
-#torch.set_num_threads(3)
+
 train_loss, test_loss, signal_loss = train_model(
     train_dataloader = X_train_dataloader, 
     test_dataloader = X_test_dataloader, 
@@ -114,6 +95,8 @@ train_loss, test_loss, signal_loss = train_model(
 
 #============== Save Analysis========
 
+
+#function for plotting the latent space of a 1D vae with different mean and logvars
 def plot_latent_space(model, scale=5.0, n=10, digit_size=32, figsize=15):
     # display a n*n 2D manifold of digits
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -129,12 +112,8 @@ def plot_latent_space(model, scale=5.0, n=10, digit_size=32, figsize=15):
             yi = torch.tensor([[[[yi]]]]).to(device)
             z_sample = model.reparameterization(xi,yi)
             
-            #torch.tensor([[[xi, yi]]], dtype=torch.float).to(device)
-            #print("Z-sample: " + str(z_sample))
-            #print(z_sample.size)
             x_decoded = model.decode(z_sample.float())[0]
-            #print("x mean: " + str(torch.mean(x_decoded)))
-            #print(x_decoded.shape)
+            
             digit = x_decoded[0].detach().cpu().reshape(digit_size, digit_size)
             figure[i * digit_size : (i + 1) * digit_size, j * digit_size : (j + 1) * digit_size,] = digit
 
@@ -156,100 +135,7 @@ def plot_latent_space(model, scale=5.0, n=10, digit_size=32, figsize=15):
     plt.clf()
 
 
-'''
-def plot_latent_space(model, scale=10.0, n=6, digit_size=6, figsize=15):
-    # display a n*n 2D manifold of digits
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    figure = np.zeros((digit_size * n, digit_size * n))
-
-    # construct a grid 
-    grid_x = np.linspace(-scale, 20, n)
-    grid_y = np.linspace(-20, 20, n)[::-1]
-
-    for i, yi in enumerate(grid_y):
-        for j, xi in enumerate(grid_x):
-            mean = torch.tensor([[[xi, xi, xi, xi, xi, xi], [xi, xi, xi, xi, xi, xi],[xi, xi, xi, xi, xi, xi],[xi, xi, xi, xi, xi, xi],[xi, xi, xi, xi, xi, xi],[xi, xi, xi, xi, xi, xi]]], dtype=torch.float).to(device)
-            logvar = torch.tensor([[[yi, yi, yi, yi, yi, yi],[yi, yi, yi, yi, yi, yi],[yi, yi, yi, yi, yi, yi],[yi, yi, yi, yi, yi, yi],[yi, yi, yi, yi, yi, yi],[yi, yi, yi, yi, yi, yi]]], dtype=torch.float).to(device)
-            z_sample = model.reparameterization(mean, logvar)
-            #print(z_sample)
-            #print(z_sample.shape)
-            #z_sample = torch.tensor([[xi, yi]], dtype=torch.float).to(device)
-            x_decoded = model.decode(z_sample)
-            #print(x_decoded)
-            #digit = x_decoded[0].detach().cpu().reshape(digit_size, digit_size)
-            digit = z_sample[0].detach().cpu().reshape(digit_size, digit_size)
-            #print(figure[i * digit_size : (i + 1) * digit_size, j * digit_size : (j + 1) * digit_size])
-      
-            figure[i * digit_size : (i + 1) * digit_size, j * digit_size : (j + 1) * digit_size] = digit
-    plt.figure(figsize=(figsize, figsize))
-    plt.title('VAE Latent Space Visualization')
-    start_range = 0
-    end_range = n * digit_size + start_range
-    pixel_range = np.arange(start_range, end_range, digit_size)
-    sample_range_x = np.round(grid_x, 1)
-    sample_range_y = np.round(grid_y, 1)
-    plt.xticks(pixel_range, sample_range_x)
-    plt.yticks(pixel_range, sample_range_y)
-    plt.xlabel("mean, z [0]")
-    plt.ylabel("var, z [1]")
-    plt.grid(True)
-    print(figure.shape)
-    plt.imshow(figure)
-    #plt.figure(figsize=(figsize, figsize))
-    plt.title('LSP')
-    plt.savefig('LSP')
-    plt.show()
-    plt.clf()
-
-def plot_latent_space(model, scale=10.0, n=25, digit_size=28, figsize=15):
-    # display a n*n 2D manifold of digits
-    figure = np.zeros((digit_size * n, digit_size * n))
-
-    # construct a grid 
-    grid_x = np.linspace(-scale, scale, n)
-    grid_y = np.linspace(-scale, scale, n)[::-1]
-
-    for i, yi in enumerate(grid_y):
-        for j, xi in enumerate(grid_x):
-            z_sample = torch.tensor([[xi, yi]], dtype=torch.float).to(device)
-            x_decoded = model.decode(z_sample)
-            digit = x_decoded[0].detach().cpu().reshape(digit_size, digit_size)
-            figure[i * digit_size : (i + 1) * digit_size, j * digit_size : (j + 1) * digit_size,] = digit
-
-    plt.figure(figsize=(figsize, figsize))
-    plt.title('VAE Latent Space Visualization')
-    start_range = digit_size // 2
-    end_range = n * digit_size + start_range
-    pixel_range = np.arange(start_range, end_range, digit_size)
-    sample_range_x = np.round(grid_x, 1)
-    sample_range_y = np.round(grid_y, 1)
-def plot_latent_space(vae, n=6, figsize=15):
-    # Create a grid of latent vectors
-    grid_x = np.linspace(-3, 3, n)
-    grid_y = np.linspace(-3, 3, n)[::-1]
-
-    # Initialize a figure
-    figure = np.zeros((32 * n, 32 * n))
-
-    for i, yi in enumerate(grid_y):
-        for j, xi in enumerate(grid_x):
-            z_sample = torch.tensor([[xi, yi]], dtype=torch.float32)
-            with torch.no_grad():
-                x_decoded = vae.decode(z_sample).numpy()
-            digit = x_decoded[0, 0]
-            figure[i * 32: (i + 1) * 32,
-                   j * 32: (j + 1) * 32] = digit
-
-    plt.figure(figsize=(figsize, figsize))
-    
-    plt.title('LSP')
-    plt.savefig('LSP')
-    plt.show()
-    plt.clf()
-'''
 print("Analyzing Results... ")
-
-#plot_latent_space(model)
 
 plot_loss(model.train_hist, model.val_hist)
 plot_anomaly_score(model.background_test_loss, model.signal_loss, background_label, signal_label)

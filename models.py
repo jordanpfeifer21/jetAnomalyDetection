@@ -14,6 +14,8 @@ import torch.nn as nn
 from tqdm import tqdm
 import constants as c
 
+
+#classic autoencoder
 class Autoencoder(torch.nn.Module):
     def __init__(self, shape, latent_dim = 12):
         super(Autoencoder, self).__init__()
@@ -64,6 +66,7 @@ class Autoencoder(torch.nn.Module):
         decoded = self.decoder(encoded)
         return decoded
     
+#smaller autoencoder
 class SmallAutoencoder(torch.nn.Module):
     def __init__(self, shape, latent_dim = 12):
         super(SmallAutoencoder, self).__init__()
@@ -108,6 +111,9 @@ class SmallAutoencoder(torch.nn.Module):
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return decoded
+
+#An Autoencoder that has been adjusted to be comparable to TestVAE, which is a variable autoencoder. 
+#This autoencoder is to serve as a benchmark
 class TestAE(nn.Module):
     
     def __init__(self, shape):
@@ -126,34 +132,34 @@ class TestAE(nn.Module):
         alpha_init = np.random.randn()
 
         adj_var = shape[1]
-        #print("the channel size: ", str(adj_var))
+        
         self.encoder = nn.Sequential(
-            # Layer 1: input (32, 32, adj_var), output (16, 16, adj_var*10)
+            # Layer 1: input (adj_var, 32, 32), output (adj_var*10, 16, 16)
             nn.Conv2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1),
             nn.ReLU(True),
             
-            # Layer 2: input (16, 16, adj_var*10), output (8, 8, adj_var*40)
+            # Layer 2: input (adj_var*10, 16, 16), output (adj_var*10, 8, 8)
             nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1),
             nn.ReLU(True), 
 
             
-            # Layer 5: input (8, 8, adj_var*10), output (6, 6, adj_var)
+            # Layer 5: input (adj)var*10, 8, 8), output (adj_var, 6, 6)
             nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
            
         )
         
         # Decoder
         self.decoder = nn.Sequential(
-            # Layer 1: input (6, 6, adj_var), output (8, 8, adj_var*10)
+            # Layer 1: input (adj_var, 6, 6), output (adj_var*10, 8, 8)
             nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=1, padding=0),
             nn.ReLU(True),
             
     
-            # Layer 3: input (8, 8, adj_var*20), output (16, 16, adj_var*10)
+            # Layer 3: input (adj_var*20, 8, 8), output (adj_var*10, 16, 16)
             nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.ReLU(True),
             
-            # Layer 4: input (16, 16, adj_var*10), output (32, 32, adj_var)
+            # Layer 4: input (adj_var*10, 16, 16), output (adj_var, 32, 32)
             nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
           
         )
@@ -163,6 +169,7 @@ class TestAE(nn.Module):
         x = self.decoder(x)
         return x
 
+#This is the VAE that we have been adjusting to experiment with different loss functions, dimensions, and number of parameters
 class TestVAE(nn.Module):
     def __init__(self, shape):
         super(TestVAE, self).__init__()
@@ -182,19 +189,19 @@ class TestVAE(nn.Module):
         self.in_channels = adj_var
         
         self.encoder = nn.Sequential(
-            # Layer 1: input (32, 32, adj_var), output (16, 16, adj_var*10)
+            # Layer 1: input (adj_var, 32, 32), output (adj_var*10, 16, 16)
             nn.Conv2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1),
             #nn.ReLU(True),
             
-            # Layer 2: input (16, 16, adj_var*10), output (8, 8, adj_var*40)
+            # Layer 2: input (adj_var*10, 16, 16), output (adj_var*10, 8, 8)
             nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var*30, kernel_size=3, stride=2, padding=1),
             #nn.ReLU(True), 
 
             
-            # Layer 5: input (8, 8, adj_var*10), output (6, 6, adj_var)
+            # Layer 5: input (adj_var*10, 8, 8), output (adj_var, 6, 6)
             nn.Conv2d(in_channels=adj_var*30, out_channels=adj_var*10, kernel_size=3, stride=1, padding=0),
            
-            # Layer 5: input (6, 6, adj_var*10), output (4, 4, adj_var)
+            # Layer 5: input (adj_var, 6, 6), output (adj_var, 4, 4)
             nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
             
         )
@@ -204,76 +211,17 @@ class TestVAE(nn.Module):
         self.logvar_layer = nn.Linear(4,4)
         
         adjustable_variable = adj_var
-        '''
+        
         # Decoder
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
             #nn.ReLU(True),
             nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
             #nn.ReLU(True),
-            # Layer 3: input (8, 8, adj_var*20), output (16, 16, adj_var*10)
+            
             nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.ReLU(True),
-            
-            #nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.ReLU(True),
+        )
 
-            #nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var*30, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.ReLU(True),
-            #nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.ReLU(True),
-            # Layer 3: input (8, 8, adj_var*20), output (16, 16, adj_var*10)
-            #nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.ReLU(True),
-        )
-        '''
-        '''
-        # Encoder
-        self.encoder = nn.Sequential(
-            # Layer 1: input (32, 32, adj_var), output (16, 16, adj_var*10)
-            nn.Conv2d(in_channels=adj_var, out_channels=adj_var*8, kernel_size=3, stride=2, padding=1),
-            nn.ReLU(True),
-            
-            # Layer 2: input (16, 16, adj_var*10), output (8, 8, adj_var*40)
-            nn.Conv2d(in_channels=adj_var*8, out_channels=adj_var*8, kernel_size=3, stride=2, padding=1),
-            nn.ReLU(True), 
-
-            
-            # Layer 5: input (8, 8, adj_var*10), output (6, 6, adj_var)
-            nn.Conv2d(in_channels=adj_var*8, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
-           
-            #nn.Flatten()
-        )
-        
-        # Latent space layers
-        self.mean_layer = nn.Sequential(
-            nn.Conv2d(in_channels=adj_var*1, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
-            nn.AdaptiveAvgPool2d(1)  # Global average pooling to output (adj_var, 1, 1)
-        )
-        
-        self.logvar_layer = nn.Sequential(
-            nn.Conv2d(in_channels=adj_var*1, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
-            nn.AdaptiveAvgPool2d(1)  # Global average pooling to output (adj_var, 1, 1)
-        )
-        
-        # Decoder layers
-        self.decoder = nn.Sequential(
-            # Layer 1: input (adj_var, 1, 1), output (adj_var, 6, 6)
-            nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var, kernel_size=4, stride=1, padding=0),
-            nn.ReLU(True),
-            
-            # Layer 2: input (adj_var, 6, 6), output (adj_var, 8, 8)
-            nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.ReLU(True),
-            
-            # Layer 3: input (adj_var, 8, 8), output (adj_var*8, 16, 16)
-            nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*8, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.ReLU(True),
-            
-            # Layer 4: input (adj_var*8, 16, 16), output (1, 32, 32)
-            nn.ConvTranspose2d(in_channels=adj_var*8, out_channels=1, kernel_size=3, stride=2, padding=1, output_padding=1),
-        )
-        '''
     def encode(self, x):
         x = self.encoder(x)
         mean, logvar = self.mean_layer(x), self.logvar_layer(x)
@@ -293,7 +241,7 @@ class TestVAE(nn.Module):
         x_hat = x
         return x_hat, mean, logvar
     
-
+#VAE with a 2d latent space so that the latent space can be plotted
 class TestVAE2d(nn.Module):
     def __init__(self, shape):
         super(TestVAE2d, self).__init__()
@@ -333,13 +281,13 @@ class TestVAE2d(nn.Module):
             nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var*2, kernel_size=2, stride=1, padding=0),
            
            
-            #nn.Flatten()
+            
         )
         
          # Latent space
         self.mean_layer = nn.Linear(1,1)#nn.Conv2d(in_channels=adj_var*1, out_channels=adj_var, kernel_size=3, stride=1, padding=0)#nn.Linear(6*6,  6*6)
         self.logvar_layer = nn.Linear(1,1)#nn.Conv2d(in_channels=adj_var*1, out_channels=adj_var, kernel_size=3, stride=1, padding=0)#nn.Linear(6*6 ,  6*6)
-        '''
+       
         adjustable_variable = adj_var
         # Decoder
         self.decoder = nn.Sequential(
@@ -363,54 +311,7 @@ class TestVAE2d(nn.Module):
             #nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
           
         )
-        '''
-        '''
-        # Encoder
-        self.encoder = nn.Sequential(
-            # Layer 1: input (32, 32, adj_var), output (16, 16, adj_var*10)
-            nn.Conv2d(in_channels=adj_var, out_channels=adj_var*8, kernel_size=3, stride=2, padding=1),
-            nn.ReLU(True),
-            
-            # Layer 2: input (16, 16, adj_var*10), output (8, 8, adj_var*40)
-            nn.Conv2d(in_channels=adj_var*8, out_channels=adj_var*8, kernel_size=3, stride=2, padding=1),
-            nn.ReLU(True), 
-
-            
-            # Layer 5: input (8, 8, adj_var*10), output (6, 6, adj_var)
-            nn.Conv2d(in_channels=adj_var*8, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
-           
-            #nn.Flatten()
-        )
-        
-        # Latent space layers
-        self.mean_layer = nn.Sequential(
-            nn.Conv2d(in_channels=adj_var*1, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
-            nn.AdaptiveAvgPool2d(1)  # Global average pooling to output (adj_var, 1, 1)
-        )
-        
-        self.logvar_layer = nn.Sequential(
-            nn.Conv2d(in_channels=adj_var*1, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
-            nn.AdaptiveAvgPool2d(1)  # Global average pooling to output (adj_var, 1, 1)
-        )
-        
-        # Decoder layers
-        self.decoder = nn.Sequential(
-            # Layer 1: input (adj_var, 1, 1), output (adj_var, 6, 6)
-            nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var, kernel_size=4, stride=1, padding=0),
-            nn.ReLU(True),
-            
-            # Layer 2: input (adj_var, 6, 6), output (adj_var, 8, 8)
-            nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.ReLU(True),
-            
-            # Layer 3: input (adj_var, 8, 8), output (adj_var*8, 16, 16)
-            nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*8, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.ReLU(True),
-            
-            # Layer 4: input (adj_var*8, 16, 16), output (1, 32, 32)
-            nn.ConvTranspose2d(in_channels=adj_var*8, out_channels=1, kernel_size=3, stride=2, padding=1, output_padding=1),
-        )
-        '''
+       
     def encode(self, x):
         x = self.encoder(x)
         mean, logvar = self.mean_layer(x), self.logvar_layer(x)
@@ -429,21 +330,8 @@ class TestVAE2d(nn.Module):
     def forward(self, x):
         x = x.float()
         x, mean, logvar = self.encode(x)
-        #print(mean)
-        #print(logvar)
-        #print("=====================================================")
-        ##print(mean)
-        #print("-----------------------------------------------------")
-        #print(logvar)
-        #z = self.reparameterization(mean, logvar)
-        #print("Min z: " + str(torch.min(z)))
-        #print("Max z: " + str(torch.max(z)))
-        #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        #print(z)
-        #print("What Z should look like: " + str(z))
-        #x_hat = self.decode(z)
-        x_hat = 0
-        x_hat = x
+       	z = self.reparameterization(mean, logvar)
+        x_hat = self.decode(z)
         return mean, logvar
     
 
@@ -511,35 +399,21 @@ def train_loop(dataloader, model, loss_fn, optimizer):
 
         beta = 1
         reco, mean, logvar = model(X.float())
-        #mean = mean *(10**5)
-        #print(type(logvar))
-        ##print(logvar.shape)
-        ##logvar = logvar
-        #print(mean)
-        #print(logvar)
+       
         
         kl_loss_og = (-0.5 *torch.sum(1 + logvar - mean.pow(2) - ((logvar.exp()))))
         kl_loss = (kl_loss_og.cpu())
     
-        loss = kl_loss
-        loss = torch.mean(loss)
+        recon_loss = loss_fn(reco, X)
+        loss = (torch.mean(kl_loss)*(beta)) + (recon_loss*(1-beta))
         total_loss.append((loss))
         
         
-        #pred = model(X)
-        #loss = loss_fn(pred, X)
-        #total_loss.append(float(loss))
-        #loss = kl_loss
-        # Backpropagation
-        #loss.backward()
-        #kl_loss_og = torch.mean(kl_loss_og)
-        #loss = torch.tensor(loss)
-        #optimizer.zero_grad()  # Clear the gradients
+      
         loss.backward()     # Compute the gradients
-        #loss.backward()
+
         optimizer.step()  
-        #optimizer.step()
-        #optimizer.zero_grad()
+        
     
 
 
@@ -555,14 +429,10 @@ def eval_loop(dataloader, model, loss_fn, test=False, signal=False):
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             X = X.to(device)
             beta = 1
-            reco, mean, logvar = model(X.float())
-            #print(mean)
-            #print(logvar)
-            #mean = torch.mean(mean)
-            #logvar = torch.mean(logvar)
-            #print("Mean: " + str(mean))
-            #print("Var: " + str(logvar))
+            reco, mean, logvar = model(X.float)
             pred = 0#pred.cpu()
+
+	    #code to plot the latent space if a 2d VAE
             #if (test == True) or (signal == True):
                 #print(pred)
                 
@@ -570,29 +440,16 @@ def eval_loop(dataloader, model, loss_fn, test=False, signal=False):
                 #    print(coordinate)
                 #latent_x = pred[0]
                 #latent_y = pred[1]
-            #print("Size of pred output: " + str(pred[0].size))
-            # torch.exp(logvar)
+            
+
             kl_loss = (-0.5 *torch.sum(1 + logvar - mean.pow(2) - ((logvar.exp()))))#*(10**5)
-            #print("logvar: " + str(logvar))
-            #print("mean squared: " + str(mean.pow(2)))
-            #print("logvar exp: " + str(logvar.exp()))
-            #print("KL Loss: "+ str(kl_loss))
-            #print(kl_loss)
-            #kl_loss = kl_loss.cpu()
-            #kl_loss = kl_loss.detach().numpy()
-            #print(kl_loss)
-            #kl_loss = torch.mean(kl_loss) 
-            #print(kl_loss)
-            #print(111111111111111111111111111111111111111111111111111)
-            ##print(torch.mean(kl_loss))
-            #print(222222222222222222222222222222222222)
+            
+            kl_loss = torch.mean(kl_loss) 
+            
             X = X.cpu()
-            recon_loss = 0 #loss_fn(pred, X)
+            recon_loss = loss_fn(pred, X)
             loss_app = (recon_loss*(1-beta))+(kl_loss*beta)
-            #print(3333333333333333333333333333333333)
-            #print(loss_app)
             loss_app =torch.mean(loss_app)
-            #print(4444444444444444444444444444444444444444444)
             loss.append(float(loss_app))
             data.append(X)
     if test: 
@@ -621,7 +478,9 @@ def train_model(train_dataloader, test_dataloader, signal_dataloader, model, los
 
         model.train_hist.append(np.mean(train_loss))
         model.val_hist.append(np.mean(val_loss))
-        '''
+  	
+	#for plotting latent space with 2d VAE
+	'''
         if (epoch == 0) or (epoch%5 == 0):
             plt.scatter(test_lx, test_ly, label="Test")
             plt.scatter(signal_lx, signal_ly, label="Signal")
