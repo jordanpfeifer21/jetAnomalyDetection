@@ -26,6 +26,7 @@ def one_hot_encode_list(unique_values, array):
 def format_2D(data, properties):
     hists = []
     n_properties = len(properties)
+    print("Why is this the wrong number: " + str(properties) + "," + str(len(properties)))
     for prop in properties: 
         if prop == 'pdgId': 
             flattened_list = [item for sublist in data['pdgId'] for item in sublist]
@@ -78,6 +79,7 @@ def format_2D(data, properties):
             hists.append([make_histogram(data['eta'][i], data['phi'][i], (np.array(data[prop][i]) * 10).flatten()) for i in range(data.shape[0])])
             # print("warning: multiplying by 10")
     total_hist = np.stack((hists), axis=-1)
+    print("Number of properties: " + str(n_properties))
     total_hist = np.reshape(total_hist, (-1, n_properties, c.BINS, c.BINS)).astype('float32')
 
     print("Length of data: ", len(total_hist))

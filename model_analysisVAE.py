@@ -59,7 +59,7 @@ def process_data(data_list, index, loss, loss_type, loss_fn, model, is_max, prop
     plt.clf()
 
 def plot_examples(model, loss_fn, signal_label, background_label, properties=[]): 
-        loss_fn = MSELoss()
+        MSELoss()
         test_loss = model.background_test_loss 
         anomaly_loss = model.signal_loss
         test_data_list = model.test_data
@@ -113,8 +113,8 @@ def plot_anomaly_score(test_scores, anomaly_scores, background_label, signal_lab
 
 
 def plot_roc(model, signal_label, background_label, examples=False, loss_fn=MSELoss(), properties=[]):
-        test_loss = model.background_test_loss
-        anomaly_loss = model.signal_loss
+        test_loss = model.background_anomaly_scores
+        anomaly_loss = model.signal_anomaly_scores
 
         min_val = np.min([np.min(anomaly_loss), np.min(test_loss)])
         max_val = np.max([np.max(anomaly_loss), np.max(test_loss)])

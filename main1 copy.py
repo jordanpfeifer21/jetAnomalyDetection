@@ -1,4 +1,4 @@
-from format_data import format_2D
+from format_data_jv import format_2D
 from models import Autoencoder, train_model, Transformer, SmallAutoencoder, TestAE, TestVAE
 from torch.optim import Adam
 from torch.nn import MSELoss
@@ -17,12 +17,12 @@ import glob
 import os
 
 background_label = "qcd"
-signal_label = "hbb"
-props = ['pt']
+signal_label = "wjet"
+props = ['pdgId']
 data_dir = "/eos/user/j/jopfeife/2024/processed_data"
 
 batch_size = 25
-epochs = 30
+epochs = 500
 initial_lr = 0.001
 weight_decay = 1e-3
 latent_dim = 12
@@ -59,11 +59,17 @@ signal = np.load(data_dir + "/signal" + prop_string + ".npy", allow_pickle=True)
 pkl_files = glob.glob(os.path.join((data_dir+'/QCD/400to500'), f'*{background_label}*.pkl'))
 #print("Background files: ", pkl_files)
 background = pd.concat([pd.read_pickle(file) for file in pkl_files], ignore_index=True)
-background = format_2D(background, props)
+background, scalers, background_data = format_2D(background, properties=props, scalers=None)
+np.save(data_dir + "/" + background_label + prop_string + ".npy", background)
+print("BACKGROUND LOADED AND SAVED")
 
-pkl_files = glob.glob(os.path.join((data_dir+'/HBB/'), f'*{signal_label}*.pkl'))
+#background = format_2D(background, props)
+
+pkl_files = glob.glob(os.path.join((data_dir+'/WJET/400to500'), f'*{signal_label}*.pkl'))
 signal = pd.concat([pd.read_pickle(file) for file in pkl_files], ignore_index=True)
-signal = format_2D(signal, props)
+signal, _, signal_data = format_2D(signal, properties=props, scalers=scalers)
+np.save(data_dir + "/" + signal_label + prop_string + ".npy", signal)
+#signal = format_2D(signal, props)
 print("FILES LOADED")
 
 print("Background events: ", len(background))

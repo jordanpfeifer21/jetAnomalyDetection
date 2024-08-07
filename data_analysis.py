@@ -50,11 +50,44 @@ def plot_avg(data, filetype):
                     hist_array.append(make_histogram(eta[index], phi[index], data[prop_name][index]))
                 avg = np.mean(hist_array, axis=0)
                 plot_histogram(avg, "avg_"+ filetype + "_" + prop_name + ".png", "average_" + filetype + "_" + prop_name)
+def plot_property_distribution2(background_data, signal_data, prop_name, background_label, signal_label):
+    fig, ax = plt.subplots()
+    ax.set_title("Distribution of " + prop_name )
+    ax.set_xlabel(prop_name)
+    bins = 150
+    bin_range = (np.min([np.min(background_data), np.min(signal_data)]),
+            np.max([np.max(background_data), np.max(signal_data)]) + 1)
+    ax.hist(background_data, density=True, label=background_label, alpha=0.5, bins=bins, range=bin_range)
+    ax.hist(signal_data, density=True, label=signal_label, alpha=0.5, bins=bins, range=bin_range)
+    plt.legend()
+    # plt.yscale('log')
+    plt.savefig(prop_name + "_distribution.png")
+    plt.show()
+    plt.close(fig)
 
+
+
+
+
+
+'''
 def plot_property_distribution(background, signal, props):
     for prop_name in props: 
-        background_prop = [p for sublist in background[prop_name] for p in sublist]
-        signal_prop = [p for sublist in signal[prop_name] for p in sublist]
+        print(9999999999999999999)
+        print(props)
+        #print(background[prop_name])
+        print(background)
+        print(background.shape)
+        print(signal)
+        background_prop = [p for sublist in background[0] for p in sublist]
+        signal_prop = [p for sublist in signal[0] for p in sublist]
+        if prop_name == 'pdgId':
+            background_prop =[]
+            signal_prop = []
+            for channel in background[1]:
+                
+                background_prop.append(channel.shape)
+                signal_prop.append(channel.shape)
         if prop_name == 'dzErr': 
             background_prop = [p / z for sublist1, sublist2 in zip(background['dz'], background['dzErr']) for p, z in zip(sublist1, sublist2)]
             signal_prop = [p / z for sublist1, sublist2 in zip(signal['dz'], signal['dzErr']) for p, z in zip(sublist1, sublist2)]
@@ -77,7 +110,8 @@ def plot_property_distribution(background, signal, props):
                 ax.hist(background_prop, density=True, label='Background', alpha=0.5, bins=bins, range = bin_range)
                 ax.hist(signal_prop, density=True, label='Signal', alpha=0.5, bins=bins, range = bin_range)
                 plt.legend()
-                plt.savefig("plots/" + prop_name + "_distribution.png")
+                plt.savefig("plots/" + prop_name + "_distribution1.png")
 
                 plt.close(fig)
 
+'''

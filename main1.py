@@ -1,12 +1,12 @@
-from format_data import format_2D
-from models import Autoencoder, train_model, Transformer, SmallAutoencoder, TestAE, TestVAE
+from format_data_jv import format_2D
+from models2 import Autoencoder, train_model, Transformer, SmallAutoencoder, TestAE, TestVAE2d
 from torch.optim import Adam
-from torch.nn import MSELoss
+from torch.nn import MSELoss, CrossEntropyLoss
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 import numpy as np 
-from data_analysis import plot_property_distribution
+from data_analysis import plot_property_distribution2
 # from torchsummary import summary
 from torchinfo import summary
 import torch
@@ -17,12 +17,12 @@ import glob
 import os
 
 background_label = "qcd"
-signal_label = "hbb"
-props = ['pt']
+signal_label = "wjet"
+props = ['d0Err']
 data_dir = "/eos/user/j/jopfeife/2024/processed_data"
 
 batch_size = 25
-epochs = 30
+epochs = 20
 initial_lr = 0.001
 weight_decay = 1e-3
 latent_dim = 12
@@ -59,20 +59,39 @@ signal = np.load(data_dir + "/signal" + prop_string + ".npy", allow_pickle=True)
 pkl_files = glob.glob(os.path.join((data_dir+'/QCD/400to500'), f'*{background_label}*.pkl'))
 #print("Background files: ", pkl_files)
 background = pd.concat([pd.read_pickle(file) for file in pkl_files], ignore_index=True)
-background = format_2D(background, props)
 
-pkl_files = glob.glob(os.path.join((data_dir+'/HBB/'), f'*{signal_label}*.pkl'))
+#np.save(data_dir + "/" + background_label + prop_string + ".npy", background)
+print("BACKGROUND LOADED AND SAVED")
+
+#background = format_2D(background, props)
+
+pkl_files = glob.glob(os.path.join((data_dir+'/WJET/400to500'), f'*{signal_label}*.pkl'))
 signal = pd.concat([pd.read_pickle(file) for file in pkl_files], ignore_index=True)
-signal = format_2D(signal, props)
+
+#np.save(data_dir + "/" + signal_label + prop_string + ".npy", signal)
+#signal = format_2D(signal, props)
 print("FILES LOADED")
 
+#background, scalers, background_data_flat = format_2D(background, properties=props, scalers=None)
+background, scalers, background_data = format_2D(background, properties=props, scalers=None)
+signal, _, signal_data = format_2D(signal, properties=props, scalers=scalers)
 print("Background events: ", len(background))
 print("Signal events: ", len(signal))
 train_data, test_data = train_test_split(background, test_size = 0.4)
 
+for i, prop in enumerate(props):
+    plot_property_distribution2(background_data[i], signal_data[i], prop, background_label, signal_label)
+
+
+
+#plot_property_distribution(background, signal, props)
+
 input_shape = train_data.shape
 n_props = input_shape[1]
 print(input_shape)
+
+
+
 
 X_train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=False)
 X_test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
@@ -88,15 +107,14 @@ plt.plot
 # optimizer = Adam(model.parameters(), lr = initial_lr)
 
 print("Input shape: " + str(input_shape))
-model = TestVAE(shape = input_shape)
+model = TestVAE2d(shape = input_shape)
 optimizer = torch.optim.AdamW(model.parameters(), lr=initial_lr, weight_decay=weight_decay)
 
 print((batch_size, n_props, c.BINS, c.BINS))
 summary(model, input_size=(batch_size, n_props, c.BINS, c.BINS))
 #print("Input shape:" + str(input_shape))
 #summary(model, input_size = input_shape)
-criterion = MSELoss()
-
+criterion = CrossEntropyLoss()
 #=============== Run Model =========
 print("Training Model... ")
 #torch.set_num_threads(3)

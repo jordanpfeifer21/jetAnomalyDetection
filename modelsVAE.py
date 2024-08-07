@@ -172,6 +172,8 @@ class TestVAE(nn.Module):
         self.background_test_loss = None 
         self.background_train_loss = None
         self.signal_loss = None 
+        self.background_anomaly_scores = None
+        self.signal_anomaly_scores = None
         self.train_hist = [] 
         self.val_hist = []
         self.test_data = None 
@@ -184,49 +186,44 @@ class TestVAE(nn.Module):
         self.encoder = nn.Sequential(
             # Layer 1: input (32, 32, adj_var), output (16, 16, adj_var*10)
             nn.Conv2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1),
-            #nn.ReLU(True),
+            nn.ReLU(True),
             
             # Layer 2: input (16, 16, adj_var*10), output (8, 8, adj_var*40)
-            nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var*30, kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1),
             #nn.ReLU(True), 
 
+            #nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1),
             
             # Layer 5: input (8, 8, adj_var*10), output (6, 6, adj_var)
-            nn.Conv2d(in_channels=adj_var*30, out_channels=adj_var*10, kernel_size=3, stride=1, padding=0),
+            #nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
            
-            # Layer 5: input (6, 6, adj_var*10), output (4, 4, adj_var)
-            nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=1, padding=0),
-            
+            #nn.Flatten()
         )
         
          # Latent space
-        self.mean_layer = nn.Linear(4,4)
-        self.logvar_layer = nn.Linear(4,4)
+        self.mean_layer = nn.Linear(8,8)#nn.Conv2d(in_channels=adj_var*1, out_channels=adj_var, kernel_size=3, stride=1, padding=0)#nn.Linear(6*6,  6*6)
+        self.logvar_layer = nn.Linear(8,8)#nn.Conv2d(in_channels=adj_var*1, out_channels=adj_var, kernel_size=3, stride=1, padding=0)#nn.Linear(6*6 ,  6*6)
         
         adjustable_variable = adj_var
-        '''
         # Decoder
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.ReLU(True),
-            nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.ReLU(True),
-            # Layer 3: input (8, 8, adj_var*20), output (16, 16, adj_var*10)
-            nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.ReLU(True),
+            #nn.Unflatten(unflattend_size = (1,6,6))
+             # Layer 1: input (6, 6, adj_var), output (8, 8, adj_var*10)
             
-            #nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.ReLU(True),
-
-            #nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var*30, kernel_size=3, stride=2, padding=1, output_padding=1),
+            #nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=1, padding=0),
             #nn.ReLU(True),
             #nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
             #nn.ReLU(True),
+    
             # Layer 3: input (8, 8, adj_var*20), output (16, 16, adj_var*10)
-            #nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.ReLU(True),
+            nn.ConvTranspose2d(in_channels=adj_var, out_channels=adj_var*10, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ReLU(True),
+            
+            # Layer 4: input (16, 16, adj_var*10), output (32, 32, adj_var)
+            nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
+          
         )
-        '''
+
         '''
         # Encoder
         self.encoder = nn.Sequential(
@@ -277,7 +274,7 @@ class TestVAE(nn.Module):
     def encode(self, x):
         x = self.encoder(x)
         mean, logvar = self.mean_layer(x), self.logvar_layer(x)
-        return x, mean, logvar
+        return mean, logvar
 
     def reparameterization(self, mean, var):
         epsilon = torch.randn_like(var)    
@@ -289,8 +286,21 @@ class TestVAE(nn.Module):
 
     def forward(self, x):
         x = x.float()
-        x, mean, logvar = self.encode(x)
-        x_hat = x
+        mean, logvar = self.encode(x)
+        #print(mean)
+        #print(logvar)
+        #print("=====================================================")
+        ##print(mean)
+        #print("-----------------------------------------------------")
+        #print(logvar)
+        z = self.reparameterization(mean, logvar)
+        #print("Min z: " + str(torch.min(z)))
+        #print("Max z: " + str(torch.max(z)))
+        #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        #print(z)
+        #print("What Z should look like: " + str(z))
+        x_hat = self.decode(z)
+        #x_hat = 0
         return x_hat, mean, logvar
     
 
@@ -325,7 +335,7 @@ class TestVAE2d(nn.Module):
             # Layer 5: input (8, 8, adj_var*10), output (6, 6, adj_var)
             nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var*10, kernel_size=3, stride=1, padding=0),
            
-            # Layer 5: input (6, 6, adj_var*10), output (6, 6, adj_var)
+            # Layer 5: input (8, 8, adj_var*10), output (6, 6, adj_var)
             nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var*10, kernel_size=3, stride=1, padding=0),
             nn.Conv2d(in_channels=adj_var*10, out_channels=adj_var*10, kernel_size=3, stride=1, padding=0),
 
@@ -339,7 +349,7 @@ class TestVAE2d(nn.Module):
          # Latent space
         self.mean_layer = nn.Linear(1,1)#nn.Conv2d(in_channels=adj_var*1, out_channels=adj_var, kernel_size=3, stride=1, padding=0)#nn.Linear(6*6,  6*6)
         self.logvar_layer = nn.Linear(1,1)#nn.Conv2d(in_channels=adj_var*1, out_channels=adj_var, kernel_size=3, stride=1, padding=0)#nn.Linear(6*6 ,  6*6)
-        '''
+        
         adjustable_variable = adj_var
         # Decoder
         self.decoder = nn.Sequential(
@@ -363,7 +373,7 @@ class TestVAE2d(nn.Module):
             #nn.ConvTranspose2d(in_channels=adj_var*10, out_channels=adj_var, kernel_size=3, stride=2, padding=1, output_padding=1),
           
         )
-        '''
+
         '''
         # Encoder
         self.encoder = nn.Sequential(
@@ -416,7 +426,7 @@ class TestVAE2d(nn.Module):
         mean, logvar = self.mean_layer(x), self.logvar_layer(x)
         #print("Parameters of mu:", list(self.mean_layer.parameters()))
         #print("Parameters of enc ogvar:", list(self.logvar_layer.parameters()))
-        return x, mean, logvar
+        return mean, logvar
 
     def reparameterization(self, mean, var):
         epsilon = torch.randn_like(var)    
@@ -428,23 +438,22 @@ class TestVAE2d(nn.Module):
 
     def forward(self, x):
         x = x.float()
-        x, mean, logvar = self.encode(x)
+        mean, logvar = self.encode(x)
         #print(mean)
         #print(logvar)
         #print("=====================================================")
         ##print(mean)
         #print("-----------------------------------------------------")
         #print(logvar)
-        #z = self.reparameterization(mean, logvar)
+        z = self.reparameterization(mean, logvar)
         #print("Min z: " + str(torch.min(z)))
         #print("Max z: " + str(torch.max(z)))
         #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
         #print(z)
         #print("What Z should look like: " + str(z))
-        #x_hat = self.decode(z)
-        x_hat = 0
-        x_hat = x
-        return mean, logvar
+        x_hat = self.decode(z)
+        #x_hat = 0
+        return x_hat, mean, logvar
     
 
 
@@ -509,21 +518,24 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         X = X.to(device)
 
 
-        beta = 1
-        reco, mean, logvar = model(X.float())
-        #mean = mean *(10**5)
-        #print(type(logvar))
-        ##print(logvar.shape)
-        ##logvar = logvar
-        #print(mean)
-        #print(logvar)
-        
-        kl_loss_og = (-0.5 *torch.sum(1 + logvar - mean.pow(2) - ((logvar.exp()))))
-        kl_loss = (kl_loss_og.cpu())
-    
-        loss = kl_loss
-        loss = torch.mean(loss)
-        total_loss.append((loss))
+        beta = 0
+        pred, mean, logvar = model(X.float())
+
+        kl_loss_og = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp(), dim=1)
+
+        kl_loss = kl_loss_og.cpu()
+        #kl_loss = kl_loss.detach().numpy()
+        kl_loss = torch.sum(kl_loss) 
+        recon_loss = loss_fn(pred, X).cpu()
+        #recon_loss = recon_loss.detach().numpy()
+        #print(kl_loss)
+        #print("----------------------------")
+        #print(recon_loss)
+        loss = (recon_loss*(1-beta))+(kl_loss*beta)
+        #print("-------------------")
+        #print(loss)
+
+        total_loss.append(float(loss))
         
         
         #pred = model(X)
@@ -534,7 +546,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         #loss.backward()
         #kl_loss_og = torch.mean(kl_loss_og)
         #loss = torch.tensor(loss)
-        #optimizer.zero_grad()  # Clear the gradients
+        optimizer.zero_grad()  # Clear the gradients
         loss.backward()     # Compute the gradients
         #loss.backward()
         optimizer.step()  
@@ -547,6 +559,7 @@ def eval_loop(dataloader, model, loss_fn, test=False, signal=False):
     model.eval()
     loss = []
     data = []
+    anomaly_scores = []
     if (test == True) or (signal == True):
         latent_x = []
         latent_y = []
@@ -554,25 +567,23 @@ def eval_loop(dataloader, model, loss_fn, test=False, signal=False):
         for X in dataloader:
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             X = X.to(device)
-            beta = 1
-            reco, mean, logvar = model(X.float())
-            #print(mean)
-            #print(logvar)
+            beta = 0
+            pred, mean, logvar = model(X.float())
             #mean = torch.mean(mean)
             #logvar = torch.mean(logvar)
             #print("Mean: " + str(mean))
             #print("Var: " + str(logvar))
-            pred = 0#pred.cpu()
-            #if (test == True) or (signal == True):
+            pred = pred.cpu()
+            if (test == True) or (signal == True):
                 #print(pred)
                 
                 #for coordinate in pred:
                 #    print(coordinate)
-                #latent_x = pred[0]
-                #latent_y = pred[1]
+                latent_x = pred[0]
+                latent_y = pred[1]
             #print("Size of pred output: " + str(pred[0].size))
             # torch.exp(logvar)
-            kl_loss = (-0.5 *torch.sum(1 + logvar - mean.pow(2) - ((logvar.exp()))))#*(10**5)
+            kl_loss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
             #print("logvar: " + str(logvar))
             #print("mean squared: " + str(mean.pow(2)))
             #print("logvar exp: " + str(logvar.exp()))
@@ -581,30 +592,22 @@ def eval_loop(dataloader, model, loss_fn, test=False, signal=False):
             #kl_loss = kl_loss.cpu()
             #kl_loss = kl_loss.detach().numpy()
             #print(kl_loss)
-            #kl_loss = torch.mean(kl_loss) 
+            kl_loss = torch.sum(kl_loss) 
             #print(kl_loss)
-            #print(111111111111111111111111111111111111111111111111111)
-            ##print(torch.mean(kl_loss))
-            #print(222222222222222222222222222222222222)
             X = X.cpu()
-            recon_loss = 0 #loss_fn(pred, X)
+            recon_loss = loss_fn(pred, X)
             loss_app = (recon_loss*(1-beta))+(kl_loss*beta)
-            #print(3333333333333333333333333333333333)
-            #print(loss_app)
-            loss_app =torch.mean(loss_app)
-            #print(4444444444444444444444444444444444444444444)
             loss.append(float(loss_app))
             data.append(X)
+            kl_loss = kl_loss.cpu()
+            anomaly_scores.append(kl_loss)
     if test: 
         model.test_data = data 
-        
     elif signal: 
         model.signal_data = data
     
-    if (test == True) or (signal == True):
-        return loss
-    else: 
-        return loss
+    
+    return loss, anomaly_scores
 
 def train_model(train_dataloader, test_dataloader, signal_dataloader, model, loss_fn, optimizer, epochs, batch_size):
     for epoch in tqdm(range(epochs)):
@@ -613,14 +616,16 @@ def train_model(train_dataloader, test_dataloader, signal_dataloader, model, los
         val_loss = []
         signal_loss = []
         train_loop(train_dataloader, model, loss_fn, optimizer)
-        test_loss=(eval_loop(test_dataloader, model, loss_fn, test=True, signal=False)) 
-        signal_loss= (eval_loop(signal_dataloader, model, loss_fn, test=False, signal=True))
+        test_loss, test_as =(eval_loop(test_dataloader, model, loss_fn, test=True, signal=False)) 
+        signal_loss, signal_as = (eval_loop(signal_dataloader, model, loss_fn, test=False, signal=True))
         val_loss.extend(test_loss)
-        train_loss.extend((eval_loop(train_dataloader, model, loss_fn, test=False, signal=False)))
+
+        train_loss.extend((eval_loop(train_dataloader, model, loss_fn, test=False, signal=False))[0])
         signal_loss.extend(signal_loss)
 
         model.train_hist.append(np.mean(train_loss))
         model.val_hist.append(np.mean(val_loss))
+
         '''
         if (epoch == 0) or (epoch%5 == 0):
             plt.scatter(test_lx, test_ly, label="Test")
@@ -638,4 +643,6 @@ def train_model(train_dataloader, test_dataloader, signal_dataloader, model, los
     model.background_test_loss = val_loss
     model.background_train_loss = train_loss
     model.signal_loss = signal_loss
+    model.background_anomaly_scores = test_as
+    model.signal_anomaly_scores = signal_as
     return train_loss, val_loss, signal_loss
