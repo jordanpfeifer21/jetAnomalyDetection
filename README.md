@@ -11,7 +11,7 @@ mainVAE.py and modelVAE.py contain code for using kl_loss as the anomaly scores.
 However anomaly scores are generated only from kl_loss
 
 ## Explination of files: 
-[constants.py]: set of constants used throughout the project. Includes parameters for preprosessing and making histograms.
+[constants.py](constants.py): set of constants used throughout the project. Includes parameters for preprosessing and making histograms.
 data_analysis.py: is used to plot priperty distributions of the data
 format_data.py: formats data into histograms from raw .pkl files
 main.py: runs models in models.py
