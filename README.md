@@ -50,3 +50,4 @@ Input shapes for pdgID are of shape (8,32,32) if one-hot-encoded
  3. MSE loss generally works better than Cross Entropy Loss
  4. The best all around latent space we have found is 6x6, but in some cases a 4x4 or 8x8 has shown better performance
 
+If you have any further questions please feel free to reach out to me at rohan_pankaj[at]brown.edu or rohansp01[at]gmail.com 
