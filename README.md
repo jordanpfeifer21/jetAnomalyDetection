@@ -1,5 +1,5 @@
 
-##About:
+## About:
 The code in this branch was developed to test using a variable autoencoder to detect anomalies in jet data. 
 
 ##Explintion of workflow:
