@@ -39,4 +39,14 @@ All data (from .root files) must be preprocessed in preprocess.py
 That data then must then be reformatted and run through a model in main.py 
     (reformatting code is in format_data.py, model analysis figures can be modified in model_analysis.py, 
     model is kept in models.py)
+    
+## General Information: 
+Images are ged into the model as shape (number of parameters, 32, 32). For example if you are training on pt the number of parameters is 1, if on dz/dzErr and d0/d0Err the nyumber of parameters is 2. 
+Input shapes for pdgID are of shape (8,32,32) if one-hot-encoded
+
+## Lessons Learned:
+ 1. You cannot train a VAE on only kl_loss. The purpose of KLD is to compare two distributions so you have to train on recon loss and then can use kl_loss for anomaly scores during the eval loop
+ 2. trainings VAEs takes longer than regular autoencoders
+ 3. MSE loss generally works better than Cross Entropy Loss
+ 4. The best all around latent space we have found is 6x6, but in some cases a 4x4 or 8x8 has shown better performance
 
