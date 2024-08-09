@@ -1,4 +1,4 @@
-from format_data_jv import format_2D
+from format_data import format_2D
 from modelsVAE import Autoencoder, train_model, Transformer, SmallAutoencoder, TestAE, TestVAE
 from torch.optim import Adam
 from torch.nn import MSELoss, CrossEntropyLoss
