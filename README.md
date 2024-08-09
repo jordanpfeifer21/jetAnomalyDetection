@@ -15,16 +15,21 @@ However anomaly scores are generated only from kl_loss
 
 [data_analysis.py](data_analysis.py): is used to plot priperty distributions of the data
 
-format_data.py: formats data into histograms from raw .pkl files
-main.py: runs models in models.py
-mainVAE.py: runs models in modelsVAE.py
-model_analysis.py: for the models in models.py it calculates the AUC and generates the roc curve, trainngs and validation 
-                   loss plot, and the anomaly score distribution plot. Can also generate recon images
-model_analysisVAE.py: for the models in modelsVAE.py it calculates the AUC and generates the roc curve, trainngs and validation 
-                      loss plot, and the anomaly score distribution plot. Can also generate recon images
-models.py: contains models that use loss function for anomaly score
-modelsVAE.py: containts models that use kl_loss for anomaly score
-preprocess.py and preprocess.sh: process .root files. information on using this code is later in the readme
+[format_data.py](format_data.py): formats data into histograms from raw .pkl files
+
+[main.py](main.py): runs models in models.py
+
+[mainVAE.py](mainVAE.py): runs models in modelsVAE.py
+
+[model_analysis.py](model_analysis.py): for the models in models.py it calculates the AUC and generates the roc curve, trainngs and validation loss plot, and the anomaly score distribution plot. Can also generate recon images
+
+[model_analysisVAE.py](model_analysisVAE.py): for the models in modelsVAE.py it calculates the AUC and generates the roc curve, trainngs and validation loss plot, and the anomaly score distribution plot. Can also generate recon images
+
+[models.py](models.py): contains models that use loss function for anomaly score
+
+[modelsVAE.py](modelsVAE.py): containts models that use kl_loss for anomaly score
+
+[preprocess.py](preprocess.py) and [preprocess.sh](preprocess.sh): process .root files. information on using this code is later in the readme
 
 ## Preprocessing data: 
 
