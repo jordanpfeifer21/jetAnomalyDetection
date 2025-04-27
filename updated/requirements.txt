@@ -20,3 +20,76 @@ networkx==3.2.1
 tensorboard==2.16.2
 pyyaml==6.0.1
 pyarrow==20.0.0
+
+'''
+🛠 Final Correct Setup Instructions (Windows, CUDA 11.8)
+Step 1: Delete any broken environments
+If you already made a bad jetenv:
+
+bash
+Copy
+Edit
+conda deactivate
+conda remove --name jetenv --all
+Step 2: Create a new clean Conda environment
+bash
+Copy
+Edit
+conda create --name jetenv python=3.9
+Then activate it:
+
+bash
+Copy
+Edit
+conda activate jetenv
+Step 3: Install PyTorch + CUDA 11.8
+Install the right PyTorch wheels:
+
+bash
+Copy
+Edit
+pip install torch==2.2.1+cu118 torchvision==0.17.1+cu118 torchaudio==2.2.1 --extra-index-url https://download.pytorch.org/whl/cu118
+✅ This installs PyTorch for CUDA 11.8 — very stable on Windows.
+
+Step 4: Install torch-geometric extensions (PyG) matching CUDA 11.8
+Install the proper versions:
+
+bash
+Copy
+Edit
+pip install torch-scatter -f https://data.pyg.org/whl/torch-2.2.1+cu118.html
+pip install torch-sparse -f https://data.pyg.org/whl/torch-2.2.1+cu118.html
+pip install torch-cluster -f https://data.pyg.org/whl/torch-2.2.1+cu118.html
+pip install torch-geometric -f https://data.pyg.org/whl/torch-2.2.1+cu118.html
+✅ Now PyG and all neighbors like knn_graph, EdgeConv are correctly compiled.
+
+Step 5: Install your projects remaining dependencies
+From your requirements.txt:
+
+bash
+Copy
+Edit
+pip install -r requirements.txt
+✅ These include:
+numpy, pandas, matplotlib, scikit-learn, tqdm, tensorboard, pyyaml, etc.
+
+Step 6: Verify everything works
+Now you can run your main test script:
+
+bash
+Copy
+Edit
+python tests/test_all.py
+✅ Should work without any OSError, WinError 127, or ImportError warnings.
+
+📋 Full Summary Table
+
+Step	Command
+Delete broken env	conda remove --name jetenv --all
+Create clean env	conda create --name jetenv python=3.9
+Activate env	conda activate jetenv
+Install torch cu118	pip install torch==2.2.1+cu118 ...
+Install torch-scatter etc.	pip install torch-scatter -f ...
+Install other deps	pip install -r requirements.txt
+Test project	python tests/test_all.py
+'''
