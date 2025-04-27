@@ -1,0 +1,15 @@
+# requirements.txt
+
+torch==2.2.1
+torch-geometric==2.5.1
+torch-scatter==2.1.2
+torch-sparse==0.6.18
+torch-cluster==1.6.2
+numpy==1.25.0
+pandas==2.2.0
+matplotlib==3.8.2
+scikit-learn==1.4.0
+tqdm==4.66.1
+networkx==3.2.1
+tensorboard==2.16.2
+pyyaml==6.0.1
