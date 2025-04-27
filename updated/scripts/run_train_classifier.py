@@ -1,7 +1,18 @@
+import sys
+import os
+
+# Add the parent directory of `tests/` (which is `updated/`) to Python's search path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Updated train_classifier.py
+import torch
 import pandas as pd
-from preprocess.make_graphs import graph_data_loader
-from train.train_classifier import run_classifier_training
+import os
 import yaml
+from torch_geometric.loader import DataLoader
+from models.classifier import JetGraphAutoencoderClassification
+from preprocess.make_graphs import graph_data_loader
+from sklearn.metrics import accuracy_score
 
 # Load configuration
 with open("configs/config.yaml", "r") as f:
@@ -19,10 +30,64 @@ datatype2 = pd.read_pickle(test_file)
 datatype1_graphs = graph_data_loader(datatype1, data_label=0, nearest_neighbors=config['misc']['k_nearest_neighbors'])
 datatype2_graphs = graph_data_loader(datatype2, data_label=1, nearest_neighbors=config['misc']['k_nearest_neighbors'])
 
-# Combine graphs for classification
+# Combine graphs for training
 graphs = datatype1_graphs + datatype2_graphs
 
-# Run training
+def run_classifier_training(graphs, save_dir='checkpoints', smallest_dim=16, num_reduced_edges=16, batch_size=10, epochs=20, initial_lr=1e-3):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
+
+    model = JetGraphAutoencoderClassification(
+        num_features=graphs[0].x.shape[1],
+        smallest_dim=smallest_dim,
+        num_reduced_edges=num_reduced_edges
+    ).to(device)
+
+    optimizer = torch.optim.AdamW(model.parameters(), lr=initial_lr)
+    criterion = torch.nn.BCELoss()
+
+    loader = DataLoader(graphs, batch_size=batch_size, shuffle=True)
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    losses, accuracies = [], []
+
+    for epoch in range(epochs):
+        model.train()
+        total_loss, all_preds, all_labels = 0, [], []
+
+        for data in loader:
+            optimizer.zero_grad()
+            output = model(data).squeeze()
+            truth = data.y.float().to(device)
+            loss = criterion(output, truth)
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item() * data.num_graphs
+            preds = (output >= 0.5).int()
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(truth.cpu().numpy())
+
+        avg_loss = total_loss / len(graphs)
+        acc = accuracy_score(all_labels, all_preds)
+        losses.append(avg_loss)
+        accuracies.append(acc)
+
+        torch.save(model.state_dict(), f"{save_dir}/classifier_epoch_{epoch+1}.pt")
+
+        print(f"Epoch {epoch+1}/{epochs} | Loss: {avg_loss:.4f}, Accuracy: {acc:.4f}")
+
+    metrics_df = pd.DataFrame({
+        'epoch': range(1, epochs + 1),
+        'loss': losses,
+        'accuracy': accuracies
+    })
+    metrics_df.to_csv(f"{save_dir}/classifier_metrics.csv", index=False)
+
+    return model, losses, accuracies
+
 model, losses, accuracies = run_classifier_training(
     graphs,
     smallest_dim=config['model']['smallest_dim'],
