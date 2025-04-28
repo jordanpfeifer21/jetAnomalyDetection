@@ -16,6 +16,8 @@ from preprocess.make_graphs import graph_data_loader
 from train.train_autoencoder import run_autoencoder_training
 from train.train_classifier import run_classifier_training
 from visualize.plot_metrics import plot_loss, plot_anomaly_score, plot_roc_curve
+from train.bump_hunt import plot_bump_pvalues
+from train.correlation_heatmap import plot_feature_correlation
 
 print("✅ Modules imported successfully.")
 
@@ -75,9 +77,19 @@ model_classif, losses_classif, accuracies_classif = run_classifier_training(
 print("✅ Classifier training test complete!")
 
 # ---- Test Visualizations ----
+# ---- Test Visualizations ----
 print("\n📊 Testing Plots...")
 plot_loss(train_loss_ae, val_loss_ae)
 plot_anomaly_score(model_ae.background_test_loss, model_ae.signal_loss, background_label='QCD', signal_label='WJets')
-plot_roc_curve(model_ae.background_test_loss, model_ae.signal_loss, background_label='QCD', signal_label='WJets')
+plot_roc_curve(model_ae, background_label='QCD', signal_label='WJets')
+
+# === NEW ===
+print("\n📈 Plotting Correlation Heatmap...")
+
+plot_feature_correlation(df_train, model_ae.background_test_loss, config['misc']['node_feature_names'])
+
+print("\n🔍 Calculating Bump Hunt p-values...")
+
+plot_bump_pvalues(model_ae.background_test_loss, model_ae.signal_loss)
 
 print("\n🎉 All major modules tested successfully!")

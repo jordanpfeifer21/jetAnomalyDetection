@@ -4,8 +4,8 @@
 data:
   raw_data_dir: data/raw/
   processed_data_dir: data/processed/
-  train_file: datatype1small.pkl
-  test_file: datatype2small.pkl
+  train_file: datatype1.pkl
+  test_file: datatype2.pkl
 
 # Model Hyperparameters
 model:

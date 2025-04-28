@@ -28,7 +28,8 @@ def run_autoencoder_training(train_graphs, test_graphs, signal_graphs, smallest_
         model,
         loss_fn,
         optimizer,
-        epochs
+        epochs, 
+        batch_size=batch_size
     )
 
     return model, train_loss, val_loss, signal_loss
