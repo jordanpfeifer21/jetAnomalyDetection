@@ -5,10 +5,7 @@ from torch_cluster import knn_graph
 import pandas as pd
 from typing import List
 
-# import numpy as np
-# import torch
-# from torch_geometric.data import Data
-# from torch_cluster import knn_graph
+
 
 def make_graph(data: dict, data_label: int, node_feature_names=['pt', 'eta', 'phi', 'd0/d0Err', 'dz/dzErr'], 
                nearest_neighbors=16, device='cuda', method='eta_phi'):
