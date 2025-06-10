@@ -1,37 +1,49 @@
+"""
+Script to perform a grid search over JetGraphAutoencoder hyperparameters.
+
+This script:
+- Loads processed training and test datasets.
+- Builds k-NN graphs with different neighborhood sizes.
+- Trains the JetGraphAutoencoder for all combinations of:
+    - Learning rate
+    - Weight decay
+    - k-NN edges
+    - Latent dimension size
+- Records training/validation/signal loss curves.
+- Saves all metrics and model outputs for downstream visualization and analysis.
+"""
+
 import sys
 import os
 import numpy as np
-
-# Add the parent directory of `tests/` (which is `updated/`) to Python's search path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import itertools
 import torch
 import pandas as pd
 import yaml
-import os
 from torch_geometric.loader import DataLoader
 from models.autoencoder import JetGraphAutoencoder
 from train.utils_training import train_loop, eval_loop
 from preprocess.make_graphs import graph_data_loader
 
+# Add parent directory to Python path for module imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Load configuration
+# Load experiment configuration
 with open("configs/config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
-# Paths
+# Dataset paths
 train_file = config['data']['processed_data_dir'] + config['data']['train_file']
 test_file = config['data']['processed_data_dir'] + config['data']['test_file']
 
-# Load data
+# Load preprocessed data
 datatype1 = pd.read_pickle(train_file)
 datatype2 = pd.read_pickle(test_file)
 
-# Device
+# Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# Hyperparameter grids
+# Hyperparameter grids for sweeping
 learning_rates = [1e-5, 5e-5, 1e-4]
 weight_decays = [0.0, 1e-4, 1e-3]
 nearest_neighbors = [8, 16, 32]
@@ -39,21 +51,22 @@ smallest_dims = [8, 16]
 batch_size = config['model']['batch_size']
 epochs = config['training']['epochs']
 
-# Results
+# Collect results from all runs
 results = []
 
-# Ensure sweeps directory exists
+# Ensure output directory exists
 if not os.path.exists('sweeps'):
     os.makedirs('sweeps')
 
-# Sweep all combinations
+# Iterate over all hyperparameter combinations
 for idx, (lr, wd, k_nn, s_dim) in enumerate(itertools.product(learning_rates, weight_decays, nearest_neighbors, smallest_dims)):
     print(f"Training with lr={lr}, weight_decay={wd}, k_nn={k_nn}, smallest_dim={s_dim}")
 
-    # Make graphs with different k-nearest neighbors
+    # Rebuild graphs with updated k-NN parameter
     graphs_train = graph_data_loader(datatype1, data_label=0, nearest_neighbors=k_nn)
     graphs_test = graph_data_loader(datatype2, data_label=1, nearest_neighbors=k_nn)
 
+    # Train/validation split (80/20)
     train_size = int(0.8 * len(graphs_train))
     train_graphs = graphs_train[:train_size]
     val_graphs = graphs_train[train_size:]
@@ -63,7 +76,7 @@ for idx, (lr, wd, k_nn, s_dim) in enumerate(itertools.product(learning_rates, we
     val_loader = DataLoader(val_graphs, batch_size=batch_size)
     signal_loader = DataLoader(signal_graphs, batch_size=batch_size)
 
-    # Build model
+    # Initialize model
     model = JetGraphAutoencoder(
         num_features=train_graphs[0].x.shape[1],
         smallest_dim=s_dim,
@@ -77,25 +90,29 @@ for idx, (lr, wd, k_nn, s_dim) in enumerate(itertools.product(learning_rates, we
     model.val_hist = []
     model.signal_hist = []
 
-    # Train
+    # Training loop
     best_val_loss = float('inf')
     for epoch in range(epochs):
         epoch_train_loss = train_loop(train_loader, model, loss_fn, optimizer)
-        epoch_val_loss = np.nanmean(eval_loop(val_loader, model, loss_fn))
-        epoch_signal_loss = np.nanmean(eval_loop(signal_loader, model, loss_fn))
+        val_losses = eval_loop(val_loader, model, loss_fn)
+        signal_losses = eval_loop(signal_loader, model, loss_fn)
+
+        epoch_val_loss = np.nanmean(val_losses)
+        epoch_signal_loss = np.nanmean(signal_losses)
 
         model.train_hist.append(epoch_train_loss)
         model.val_hist.append(epoch_val_loss)
         model.signal_hist.append(epoch_signal_loss)
 
+        # Track best validation loss for model selection
         if epoch_val_loss < best_val_loss:
             best_val_loss = epoch_val_loss
-        
-    model.background_test_loss = model.val_hist
-    model.signal_loss = model.signal_hist
 
+        # Store per-sample losses
+        model.background_test_loss = val_losses
+        model.signal_loss = signal_losses
 
-    # Store results
+    # Record result for this run
     run_results = {
         'learning_rate': lr,
         'weight_decay': wd,
@@ -108,7 +125,7 @@ for idx, (lr, wd, k_nn, s_dim) in enumerate(itertools.product(learning_rates, we
     }
     results.append(run_results)
 
-    # Save individual run
+    # Save per-epoch losses
     run_df = pd.DataFrame({
         'epoch': list(range(1, epochs + 1)),
         'train_loss': model.train_hist,
@@ -117,13 +134,19 @@ for idx, (lr, wd, k_nn, s_dim) in enumerate(itertools.product(learning_rates, we
     })
     run_df.to_csv(f'sweeps/run_{idx}_losses.csv', index=False)
 
-    params_df = pd.DataFrame([{key: val for key, val in run_results.items() if key in ['learning_rate', 'weight_decay', 'nearest_neighbors', 'smallest_dim']}])
+    # Save hyperparameters
+    params_df = pd.DataFrame([{
+        'learning_rate': lr,
+        'weight_decay': wd,
+        'nearest_neighbors': k_nn,
+        'smallest_dim': s_dim
+    }])
     params_df.to_csv(f'sweeps/run_{idx}_params.csv', index=False)
-    # Save model loss arrays for full plotting later
+
+    # Save per-sample loss arrays for visualization
     np.save(f'sweeps/run_{idx}_background_test_loss.npy', np.array(model.background_test_loss))
     np.save(f'sweeps/run_{idx}_signal_loss.npy', np.array(model.signal_loss))
 
-# Save overall results to CSV
+# Save all results to CSV
 results_df = pd.DataFrame(results)
 results_df.to_csv('sweeps/autoencoder_param_sweep.csv', index=False)
-print("✅ Parameter sweep finished!")

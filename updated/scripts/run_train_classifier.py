@@ -1,39 +1,66 @@
+"""
+Script to train a graph-based autoencoder classifier for binary signal/background discrimination.
+
+This script:
+- Loads and parses configuration settings.
+- Loads preprocessed particle physics datasets.
+- Constructs graph representations of jet events using k-nearest neighbors.
+- Trains a JetGraphAutoencoderClassification model using binary cross-entropy loss.
+- Logs accuracy and loss metrics and saves model weights after each epoch.
+"""
+
 import sys
 import os
 
-# Add the parent directory of `tests/` (which is `updated/`) to Python's search path
+# Add the parent directory to Python's path for local module imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Updated train_classifier.py
 import torch
 import pandas as pd
-import os
 import yaml
 from torch_geometric.loader import DataLoader
 from models.classifier import JetGraphAutoencoderClassification
 from preprocess.make_graphs import graph_data_loader
 from sklearn.metrics import accuracy_score
 
-# Load configuration
+# Load configuration settings from YAML file
 with open("configs/config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
-# Paths
+# File paths for training and test data
 train_file = config['data']['processed_data_dir'] + config['data']['train_file']
 test_file = config['data']['processed_data_dir'] + config['data']['test_file']
 
-# Load data
+# Load preprocessed datasets
 datatype1 = pd.read_pickle(train_file)
 datatype2 = pd.read_pickle(test_file)
 
-# Create graphs
+# Convert to PyTorch Geometric Data objects (graphs)
 datatype1_graphs = graph_data_loader(datatype1, data_label=0, nearest_neighbors=config['misc']['k_nearest_neighbors'])
 datatype2_graphs = graph_data_loader(datatype2, data_label=1, nearest_neighbors=config['misc']['k_nearest_neighbors'])
 
-# Combine graphs for training
+# Combine background and signal graphs into one training set
 graphs = datatype1_graphs + datatype2_graphs
 
+
 def run_classifier_training(graphs, save_dir='checkpoints', smallest_dim=16, num_reduced_edges=16, batch_size=10, epochs=20, initial_lr=1e-3):
+    """
+    Train the JetGraphAutoencoderClassification model on a set of background and signal graphs.
+
+    Args:
+        graphs (List[Data]): List of PyG Data objects (each one a jet graph).
+        save_dir (str): Directory to save model weights and metrics.
+        smallest_dim (int): Latent dimension for GNN layers.
+        num_reduced_edges (int): Number of neighbors to use in dynamic kNN graphs.
+        batch_size (int): Number of graphs per training batch.
+        epochs (int): Number of training epochs.
+        initial_lr (float): Learning rate for optimizer.
+
+    Returns:
+        model (nn.Module): Trained classifier model.
+        losses (List[float]): Loss values per epoch.
+        accuracies (List[float]): Accuracy values per epoch.
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
@@ -45,7 +72,6 @@ def run_classifier_training(graphs, save_dir='checkpoints', smallest_dim=16, num
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=initial_lr)
     criterion = torch.nn.BCELoss()
-
     loader = DataLoader(graphs, batch_size=batch_size, shuffle=True)
 
     if not os.path.exists(save_dir):
@@ -76,9 +102,9 @@ def run_classifier_training(graphs, save_dir='checkpoints', smallest_dim=16, num
         accuracies.append(acc)
 
         torch.save(model.state_dict(), f"{save_dir}/classifier_epoch_{epoch+1}.pt")
-
         print(f"Epoch {epoch+1}/{epochs} | Loss: {avg_loss:.4f}, Accuracy: {acc:.4f}")
 
+    # Save training metrics to CSV
     metrics_df = pd.DataFrame({
         'epoch': range(1, epochs + 1),
         'loss': losses,
@@ -88,6 +114,8 @@ def run_classifier_training(graphs, save_dir='checkpoints', smallest_dim=16, num
 
     return model, losses, accuracies
 
+
+# Execute training using parameters from config
 model, losses, accuracies = run_classifier_training(
     graphs,
     smallest_dim=config['model']['smallest_dim'],

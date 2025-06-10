@@ -20,7 +20,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
 
-    return np.mean(total_loss)
+    return np.nanmean(total_loss)
 
 # Evaluation loop function
 def eval_loop(dataloader, model, loss_fn, test=False, signal=False):
@@ -57,12 +57,12 @@ def train_model(train_dataloader, test_dataloader, signal_dataloader, model, los
         signal_loss = eval_loop(signal_dataloader, model, loss_fn, test=False, signal=True)
 
         model.train_hist.append(train_loss)
-        model.val_hist.append(np.mean(val_loss))
-        model.signal_hist.append(np.mean(signal_loss))
+        model.val_hist.append(np.nanmean(val_loss))
+        model.signal_hist.append(np.nanmean(signal_loss))
 
         print(f"train loss: {train_loss:.4f}")
-        print(f"test loss: {np.mean(val_loss):.4f}")
-        print(f"signal loss: {np.mean(signal_loss):.4f}")
+        print(f"test loss: {np.nanmean(val_loss):.4f}")
+        print(f"signal loss: {np.nanmean(signal_loss):.4f}")
 
     model.background_train_loss = model.train_hist
 
@@ -82,14 +82,14 @@ def train_model(train_dataloader, test_dataloader, signal_dataloader, model, los
         train_loss.extend((eval_loop(train_dataloader, model, loss_fn, test=False, signal=False)))
         signal_loss.extend((eval_loop(signal_dataloader, model, loss_fn, test=False, signal=True)))
 
-        model.train_hist.append(np.mean(train_loss))
-        model.val_hist.append(np.mean(val_loss))
-        model.signal_hist.append(np.mean(signal_loss))
+        model.train_hist.append(np.nanmean(train_loss))
+        model.val_hist.append(np.nanmean(val_loss))
+        model.signal_hist.append(np.nanmean(signal_loss))
 #         writer.add_scalar("Loss/val", model.val_hist[-1], epoch)
 
-        print("train loss ", np.mean(train_loss))
-        print("test loss ", np.mean(val_loss))
-        print("signal loss", np.mean(signal_loss))
+        print("train loss ", np.nanmean(train_loss))
+        print("test loss ", np.nanmean(val_loss))
+        print("signal loss", np.nanmean(signal_loss))
         
 
     model.background_test_loss = val_loss
