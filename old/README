@@ -1,8 +1,0 @@
-All data (from .root files) must be preprocessed in preprocess.py 
-    (data analysis figures are in data_analysis.py, which let us explore variable distributions and data structures)
-
-That data then must then be reformatted and run through a model in main.py 
-    (reformatting code is in format_data.py, model analysis figures can be modified in model_analysis.py, 
-    model is kept in models.py)
-
-Constants are kept in constants.py
