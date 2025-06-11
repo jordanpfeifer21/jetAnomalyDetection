@@ -19,7 +19,6 @@ dist/
 # Logs and debug files
 *.log
 *.out
-*.txt
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
