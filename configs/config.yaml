@@ -29,6 +29,8 @@ data:
   background_file: QCD_scaled.pkl
   signal_file: WJet_scaled.pkl
 
+  bins: 50
+
 # Model Hyperparameters
 model:
   num_features: 5

@@ -78,7 +78,7 @@ class DataProcessor:
             logging.info(f"Concatenating {jet_label}:" + self.timer.time_taken())
             combined = pd.concat(preproc_dfs, ignore_index=True)
 
-        logging.info(f"Combined {jet_label} data length: {len(combined)} {self.self.timer.time_taken()}")
+        logging.info(f"Combined {jet_label} data length: {len(combined)} {self.timer.time_taken()}")
 
         return self.mask_pt_bounds(combined)
     

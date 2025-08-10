@@ -49,7 +49,7 @@ def concat_pkls(folder_path, filter_str=None, output_name=None, lowerpt=None, up
 
     logging.info(f"Now saving...")
     concatted.to_pickle(output_path)
-    print(f"Concatenated {len(dfs)} files in {folder_path} with filter '{'' if not filter_str else filter_str}', resulting in {len(concatted)=},\ninto {output_path=}")
+    print(f"Concatenated {len(dfs)} files {timer.time_taken()} in {folder_path} with filter '{'' if not filter_str else filter_str}', resulting in {len(concatted)=},\ninto {output_path=}")
     
     return concatted
 

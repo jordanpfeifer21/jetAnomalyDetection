@@ -108,9 +108,23 @@
 
 - modify `scaling.py` etc. to automatically add additional metadata columns during processing
 
+- graph the data distributions for msoftdrop etc
+
+- slice the wjet data (saved as concat, ready to use for training)
+    - check the pt distribution of the concatenated pt200-300 new datafiles (saved plot)
+
+- check out the model, the kNN distances
+    - hybrid metric is a weighted sum of the invariant mass inverse and geometric distance
+
+
 **NOW:**
 
-- graph the data distributions for msoftdrop etc
+- the weighting thing!
+    - check out specifically the loss fn
+    - figure out where to weight
+    - add the column to processing
+        - GRAPH THIS! GRAPH THE BINS!!!!!!!!!!!
+    - modify the trainer to do this step only if that column exists
 
 - test alphasweep!
 
@@ -151,3 +165,21 @@
 
 - Can add more metadata than currently added
     - add to documentation in readme! e.g. how to graph the fatjet pt ranges from preproc data
+
+
+
+
+
+
+**next meet:**
+- added more metadata columns to the data, and an easy automatic way of adding the data through constants
+    - the data added and re-processed: []
+
+- ik i been working moreso on technical stuff, a lot which are under the covers
+    - but im getting into the model and tryna improve it; would like to continue this into next sem
+
+- adding the weights to processing as a separate file/step
+    - bins graph: ...
+    - (can ask about no. of bins to use?)
+
+

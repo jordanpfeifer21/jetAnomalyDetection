@@ -32,7 +32,7 @@ py helpers/join_dfs.py --filter 170to300 --path data/preprocessed/qcd/ # or `wje
 py scripts/processing.py -b path/to/processed/qcd.pkl -s path/to/processed/wjet.pkl -B "qcd file label" -S "wjet file label"
 
 # visualisation e.g.
-py visualize/plot_distributions.py -q path/to/pre-or-processed.pkl -t preproc -p fj_pt
+py visualize/plot_distributions.py -q path/to/pre-or-processed.pkl -t preproc -p rawfj_pt
 
 ...
 py scripts/run_train_autoencoder.py -...
@@ -69,7 +69,8 @@ If running on Brux/some other cluster w/o a way to submit jobs like on Oscar, pr
 This starts the script in the background and writes terminal output to `nohup.out` in the current directory.\
 This means you can close the SSH connection and it'll still keep running.\
 Just make sure to check the output every now and then with `cat nohup.out`, to see if there's been any errors.\
-e.g. `nohup py scripts/preprocessing.py -t background`
+e.g. `nohup py scripts/preprocessing.py -t background`\
+Lastly, do `source shownohup.sh` to print the output of `nohup` automatically, including `tqdm`'s visuals!
 
 ### First time
 
@@ -144,3 +145,13 @@ e.g. `nohup py scripts/preprocessing.py -t background`
     - e.g. to join all `QCD_Pt1800to2400_*.pkl` files
 
 - `raw_data_info` contains the treenames and branch names for the TTrees in the raw `.root` files, e.g. "Events" or "FatJet"
+
+- and more!
+
+### Development instructions
+
+- Check out the funcs in `helpers/helpers_main.py` to avoid rewriting common stuff
+
+- `logging.info` should print to terminal AND save to a logfile in `logs`; set it up with `helpers_main.log_config(filename)`!
+
+- graphing data distributions is very easy with `visualize/visualise_all_props.sh` or directly with `plot_distributions.py`
