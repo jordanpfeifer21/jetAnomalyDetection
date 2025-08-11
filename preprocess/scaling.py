@@ -38,6 +38,7 @@ def find_scalers(df: pd.DataFrame, df_label: str, cols: List[str]) -> Dict[str, 
         Dict[str, np.ndarray]: Dictionary mapping feature names to (16th, 84th) percentiles.
                                PDG one-hot columns are skipped and mapped to [-1].
     """
+    logging.info(f"{len(df)=}")
     scaler_dict = {}
     for col in cols:
         logging.info(f"In find_scalers, {col=}")
@@ -45,15 +46,20 @@ def find_scalers(df: pd.DataFrame, df_label: str, cols: List[str]) -> Dict[str, 
             # Skip scaling for PDG one-hot columns and fatjet metadata
             scaler_dict[col] = [-1]
         else:
-            flattened_list = sorted(df[col].explode())
+            flattened_list = np.array(sorted(df[col].explode()))
+            logging.info(f"{len(flattened_list)=}\n{flattened_list[:100]=}")
+            flattened_list = flattened_list[~np.isnan(flattened_list)]
+            flattened_list = flattened_list[flattened_list != 0.0]
             # Keep only valid, non-zero, non-NaN entries
-            indices = [
-                i for i, item in tqdm(enumerate(flattened_list),
-                desc = f"Finding scalers for {df_label} - {col}")
-                if item != 0.0 and not math.isnan(item)
-            ]
+            logging.info(f"{len(flattened_list)=}\n{flattened_list=}")
+            logging.info(f"Finding scalers for {df_label} - {col}")
+            
+            # indices = [
+            #     i for i, item in enumerate(flattened_list)
+            #     if item != 0.0 and not math.isnan(item)
+            # ]
             percentiles = np.percentile(
-                np.array(flattened_list)[indices].flatten(), [16, 84]
+                flattened_list.flatten(), [16, 84]
             )
             scaler_dict[col] = percentiles
 
