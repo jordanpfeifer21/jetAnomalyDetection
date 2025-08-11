@@ -105,7 +105,8 @@ def apply_scalers(df: pd.DataFrame, scaler_dict: Dict[str, np.ndarray]) -> Tuple
             ]
             scaled_zero[col] = np.nan
         elif col.startswith(c.RAW_FATJET_PROPERTIES_PREFIX):
-            data_dict[col] = df[col]
+            # data_dict[col] = df[col]
+            continue
         else:
             per_minus_36, per_plus_36 = scaler_dict[col]
             denominator = per_plus_36 - per_minus_36 + 1e-6

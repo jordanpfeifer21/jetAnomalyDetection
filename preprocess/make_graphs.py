@@ -186,6 +186,7 @@ def graph_data_loader(df: pd.DataFrame,
     """
     graphs = []
     # add tqdm here if desired
+    # one graph system for each fatjet
     for i in tqdm(range(len(df)), desc="Building graphs"):
         try:
             graph = make_graph(data=df.iloc[i],
@@ -195,8 +196,11 @@ def graph_data_loader(df: pd.DataFrame,
                                device=device,
                                method=method,
                                alpha=alpha)
+            graph.weight = torch.tensor(
+                [df.iloc[i][c.RAW_FATJET_PROPERTIES_PREFIX + "pt_weights"]], dtype=torch.float
+            )
             graphs.append(graph)
         except Exception as e:
-            logging.info(f"Skipping event {i} due to error: {e}")
+            logging.info(f"Skipping fatjet {i} due to error: {e}")
             continue
     return graphs

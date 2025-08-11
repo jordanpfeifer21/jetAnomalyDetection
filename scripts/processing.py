@@ -204,6 +204,8 @@ class DataProcessor:
         # checking if vals is just the exploded vers of the scaled pickles
         pickle_dict(output_folder, self.qcd_scaled,  self.label_bg + "_scaled.pkl")
         pickle_dict(output_folder, self.wjet_scaled, self.label_sg + "_scaled.pkl")
+        # ^ these 2 are already dataframes, v these are dicts
+        # the bottom ones error from incongruent array lengths, likely cause the lists are flattened off!
         pickle_dict(extras_folder, self.qcd_scaled_vals,  self.label_bg + "_scaledvals.pkl")
         pickle_dict(extras_folder, self.wjet_scaled_vals, self.label_sg + "_scaledvals.pkl")
         pickle_dict(extras_folder, self.qcd_raw_vals,  self.label_bg + "_rawvals.pkl")

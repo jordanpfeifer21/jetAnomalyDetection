@@ -67,7 +67,8 @@ class TrainAutoencoder:
         self.bg_name, self.sg_name = helpers_main.trim_name(self.bg_file), helpers_main.trim_name(self.sg_file)
         self.method = args.method
         self.knn = args.knn
-        
+        self.weighted_loss = not args.noweights
+
         self.session_name = f"logs/train_ae_{self.bg_name}_{self.sg_name}_{self.method}_{helpers_main.curr_time()}.log"
         helpers_main.log_config(self.session_name)
 
@@ -165,7 +166,8 @@ class TrainAutoencoder:
             batch_size=config['model']['batch_size'],
             epochs=config['training']['epochs'],
             initial_lr=config['training']['initial_lr'],
-            save_dir=self.TRAIN_PLOTS_PATH
+            save_dir=self.TRAIN_PLOTS_PATH,
+            weighted_loss=self.weighted_loss
         )
 
     # def plot_loss(self):
@@ -190,7 +192,8 @@ class TrainAutoencoder:
 
 def run_autoencoder_training(
     train_graphs, test_graphs, signal_graphs, smallest_dim,
-    num_reduced_edges, batch_size, epochs, initial_lr, save_dir="plots/test-plots"
+    num_reduced_edges, batch_size, epochs, initial_lr, save_dir="plots/test-plots",
+    weighted_loss=True
 ):
     """
     Trains the JetGraphAutoencoder and evaluates it on background and signal graphs.
@@ -218,7 +221,7 @@ def run_autoencoder_training(
     optimizer = torch.optim.AdamW(model.parameters(), lr=initial_lr, weight_decay=1e-4)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.7)  # Decay LR by 30% every 10 epochs
 
-    loss_fn = torch.nn.MSELoss()
+    loss_fn = torch.nn.MSELoss(reduction = "none" if weighted_loss else "mean")
 
     # Dataloaders
     train_loader = DataLoader(train_graphs, batch_size=batch_size, shuffle=True)
@@ -230,7 +233,8 @@ def run_autoencoder_training(
         train_loader, test_loader, signal_loader,
         model, loss_fn, optimizer,
         epochs=epochs, batch_size=batch_size, 
-        scheduler=scheduler
+        scheduler=scheduler,
+        weighted_loss=weighted_loss
     )
 
     helpers_main.create_missing_dir("plots/test-plots/foo.bar")
@@ -257,6 +261,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--method", "-m", choices=c.GRAPH_METHODS, default="eta_phi",
         help=f"Method for building graph edges. Default: eta_phi"
+    )
+    parser.add_argument(
+        "--noweights", "-w", required=False, action=argparse.BooleanOptionalAction,
+        help="If provided, do NOT weight the loss!"
     )
     parser.add_argument(
         "--knn", "-n", type=int, default=config["misc"]["k_nearest_neighbors"],

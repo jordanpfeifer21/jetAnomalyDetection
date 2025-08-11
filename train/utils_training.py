@@ -26,7 +26,7 @@ config = helpers_main.load_config()
 import logging
 helpers_main.log_config(f"logs/train_{helpers_main.curr_time()}.log")
 
-def train_loop(dataloader, model, loss_fn, optimizer):
+def train_loop(dataloader, model, loss_fn, optimizer, weighted_loss=False):
     """
     Executes one epoch of training.
 
@@ -47,7 +47,8 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         pred = model(X)
         pred = pred[:, :X.x.shape[1]]  # Only reconstruct original feature dimensions
 
-        loss = loss_fn(pred, X.x)
+        losses = loss_fn(pred, X.x)
+        loss = (losses * X.weight).mean() if weighted_loss else losses
 
         total_loss.append(float(loss))
 
