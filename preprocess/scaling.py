@@ -47,11 +47,11 @@ def find_scalers(df: pd.DataFrame, df_label: str, cols: List[str]) -> Dict[str, 
             scaler_dict[col] = [-1]
         else:
             flattened_list = np.array(sorted(df[col].explode()))
-            logging.info(f"{len(flattened_list)=}\n{flattened_list[:100]=}")
+            # logging.info(f"{len(flattened_list)=}\n{flattened_list[:100]=}")
             flattened_list = flattened_list[~np.isnan(flattened_list)]
-            flattened_list = flattened_list[flattened_list != 0.0]
+            flattened_list = flattened_list[flattened_list != 0.0].flatten()
             # Keep only valid, non-zero, non-NaN entries
-            logging.info(f"{len(flattened_list)=}\n{flattened_list=}")
+            # logging.info(f"{len(flattened_list)=}\n{flattened_list=}")
             logging.info(f"Finding scalers for {df_label} - {col}")
             
             # indices = [
@@ -59,8 +59,8 @@ def find_scalers(df: pd.DataFrame, df_label: str, cols: List[str]) -> Dict[str, 
             #     if item != 0.0 and not math.isnan(item)
             # ]
             percentiles = np.percentile(
-                flattened_list.flatten(), [16, 84]
-            )
+                flattened_list, [16, 84]
+            ) if len(flattened_list) != 0 else np.zeros(2)
             scaler_dict[col] = percentiles
 
     return scaler_dict
