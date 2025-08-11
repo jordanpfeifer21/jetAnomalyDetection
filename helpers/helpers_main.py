@@ -41,7 +41,7 @@ def profile_func(path, func, *args):
 
 def curr_time() -> str:
     # Returns current time to use as a timestamp for naming files
-    return dt.now().strftime("%j-%H%M-%S")  # %f gives 6 digit microseconds
+    return dt.now().strftime("%j-%H%M-%S-%f")  # %f gives 6 digit microseconds
 
 class LeTimer:
     def __init__(self):

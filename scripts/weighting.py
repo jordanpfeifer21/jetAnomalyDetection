@@ -86,7 +86,13 @@ class Weighter:
         plt.hist(
             data[self.RAWFJ_PT_COL],
             bins=self.bins,
-            weights=data[self.RAWFJ_PT_COL + self.WEIGHTS_SUFFIX]
+            weights=data[self.RAWFJ_PT_COL + self.WEIGHTS_SUFFIX],
+            label="weighted"
+        )
+        plt.hist(
+            data[self.RAWFJ_PT_COL],
+            bins=self.bins,
+            label="unweighted"
         )
         fig_path = f"plots/distributions/wts_{helpers_main.curr_time()}.png"
         helpers_main.create_missing_dir(fig_path)
